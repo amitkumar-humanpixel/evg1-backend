@@ -1,0 +1,236 @@
+import {
+  BadRequestException,
+  forwardRef,
+  Inject,
+  Injectable,
+} from '@nestjs/common';
+import { ResponseHeaders } from 'src/Common/common.dto';
+import { AccreditionService } from 'src/Accredition/accredition.service';
+import { UserService } from 'src/User/user.service';
+import { DashboardResult, GetDashboardDTOResponse } from './dashboard.dto';
+
+@Injectable()
+export class DashboardService {
+  constructor(
+    @Inject(forwardRef(() => AccreditionService))
+    private accreditionService: AccreditionService,
+    @Inject(forwardRef(() => UserService))
+    private userService: UserService,
+  ) {}
+
+  async getDashboardStatusDetails(userId: number) {
+    const user = await this.userService.getUserByUserId(userId);
+    if (user != null) {
+      let data;
+      if (user.role.toLowerCase() === 'supervisor') {
+        data =
+          await this.accreditionService.getSupervisorDashboardStatusDetails(
+            userId,
+          );
+      } else if (
+        user.role.toLowerCase() === 'practice_manager' ||
+        user.role.toLowerCase() === 'principal_supervisor'
+      ) {
+        data =
+          await this.accreditionService.getPracticeManagerDashboardStatusDetails(
+            userId,
+          );
+      } else {
+        data = await this.accreditionService.getDashboardStatusDetails(userId);
+      }
+      // data = JSON.parse(JSON.stringify(data));
+      // for (let i = 0; i < this.sequence.length; i++) {
+      //   const categoryIdMap = data.map((m) => m._id);
+
+      //   const categoryIndex = categoryIdMap.indexOf(this.sequence.toString());
+      //   if (categoryIndex !== -1) {
+      //     // console.log('i::', i, '  categoryIndex::', categoryIndex)
+      //     const category = data.splice(categoryIndex, 1);
+      //     // console.log('unshifting::', category, category[0]['_id'])
+      //     data.unshift(category[0]);
+      //   }
+      // }
+
+      // data.sort((a, b) => {
+      //   const fa = a._id.toLowerCase(),
+      //     fb = b._id.toLowerCase();
+
+      //   if (fa < fb) {
+      //     return -1;
+      //   }
+      //   if (fa > fb) {
+      //     return 1;
+      //   }
+      //   return 0;
+      // });
+      return data;
+    } else {
+      throw new BadRequestException('Invalid UserId!');
+    }
+  }
+
+  async getDashboardData(
+    userId: number,
+    page: number,
+    limit: number,
+    status: string,
+  ): Promise<any> {
+    const user = await this.userService.getUserByUserId(userId);
+    if (user != null) {
+      if (user.role.toLowerCase().includes('admin')) {
+        userId = 0;
+      }
+      let data;
+      let currentStatus = '';
+      if (user.role.toLowerCase() === 'supervisor') {
+        const supervisorStatus =
+          status.toLowerCase() === 'incomplete' ? false : true;
+        data = await this.accreditionService.getSupervisorDashboardData(
+          userId,
+          page,
+          limit,
+          supervisorStatus,
+        );
+        currentStatus = supervisorStatus ? 'COMPLETE' : 'INCOMPLETE';
+      } else if (
+        user.role.toLowerCase() === 'practice_manager' ||
+        user.role.toLowerCase() === 'principal_supervisor'
+      ) {
+        data = await this.accreditionService.getPracticeManagerDashboardData(
+          userId,
+          page,
+          limit,
+          status,
+        );
+      } else {
+        data = await this.accreditionService.getDashboardData(
+          userId,
+          page,
+          limit,
+          status,
+        );
+      }
+      const response = new GetDashboardDTOResponse();
+      let total = 0;
+      if (data[0].totalCount.length > 0) {
+        total = data[0].totalCount[0]['count']
+          ? data[0].totalCount[0]['count']
+          : 0;
+      }
+
+      const headers = new Array<ResponseHeaders>();
+      const arrDashboarData = [];
+      data[0].paginatedResult.map((obj) => {
+        const dashboardData = new DashboardResult();
+        dashboardData.accreditionId = obj._id;
+        dashboardData.facilityId = obj.facilityId;
+        dashboardData.createdAt = obj.createdAt;
+        dashboardData.status =
+          currentStatus === 'INCOMPLETE'
+            ? currentStatus
+            : currentStatus === 'COMPLETE'
+            ? currentStatus
+            : obj.status;
+        dashboardData.practiceName = obj.facility.practiceName;
+        if (
+          user.role.toLowerCase().includes('super_admin') ||
+          user.role.toLowerCase().includes('practice_manager') ||
+          user.role.toLowerCase().includes('principal_supervisor') ||
+          user.role
+            .toLowerCase()
+            .includes('accreditation_support_coordinator') ||
+          user.role.toLowerCase().includes('accreditor')
+        ) {
+          let isCheck = false;
+
+          if (!obj.isPostDetailsComplete) {
+            dashboardData.formType = 'postDetails';
+            isCheck = true;
+          }
+          if (!isCheck) {
+            for (let index = 0; index < obj.formA.length; index++) {
+              const element = obj.formA[index];
+              if (!element.isComplete) {
+                dashboardData.formType = 'formA';
+                isCheck = true;
+                break;
+              }
+            }
+          }
+
+          if (!isCheck) {
+            for (let index = 0; index < obj.formA1.length; index++) {
+              const element = obj.formA1[index];
+              if (!element.isComplete) {
+                dashboardData.formType = 'formA1';
+                isCheck = true;
+                break;
+              }
+            }
+          }
+
+          if (!isCheck) {
+            for (let index = 0; index < obj.formB.length; index++) {
+              const element = obj.formB[index];
+              if (!element.isComplete) {
+                dashboardData.formType = 'formB';
+                break;
+              } else if (index == obj.formB.length - 1) {
+                dashboardData.formType = 'formB';
+                break;
+              }
+            }
+          }
+        } else if (user.role.toLowerCase().includes('supervisor')) {
+          for (let index = 0; index < obj.formA1.length; index++) {
+            const element = obj.formA1[index];
+            if (!element.isComplete) {
+              dashboardData.formType = 'formA1';
+              break;
+            } else if (index == obj.formB.length - 1) {
+              dashboardData.formType = 'formA1';
+              break;
+            }
+          }
+        }
+        arrDashboarData.push(dashboardData);
+      });
+      const obj = arrDashboarData.length > 0 ? arrDashboarData[0] : null;
+
+      if (obj !== null) {
+        const headerKeys = Object.keys(obj);
+
+        headerKeys.map((key) => {
+          if (key != 'accreditionId') {
+            const header = new ResponseHeaders();
+            header.name = key;
+            header.label = key
+              .replace(/(_|-)/g, ' ')
+              .trim()
+              .replace(/\w\S*/g, function (str) {
+                return str.charAt(0).toUpperCase() + str.substr(1);
+              })
+              .replace(/([a-z])([A-Z])/g, '$1 $2')
+              .replace(/([A-Z])([A-Z][a-z])/g, '$1 $2');
+            if (key.toLowerCase().includes('createdat')) {
+              header.type = 'date';
+            } else {
+              header.type = 'string';
+            }
+
+            headers.push(header);
+          }
+        });
+      }
+      response.data = arrDashboarData;
+      response.headers = headers;
+      response.page = page;
+      response.limit = limit;
+      response.pages = Math.ceil(total / limit);
+      response.total = total;
+      return response;
+    } else {
+      throw new BadRequestException('Invalid UserId!');
+    }
+  }
+}

@@ -1,0 +1,32 @@
+{
+    "resolveJsonModule": true,
+    "accredition": {
+        "practice_manager": "practice_manager",
+        "super_admin": "super_admin",
+        "principal_supervisor": "principal_supervisor",
+        "accreditation_support_coordinator": "accreditation_support_coordinator",
+        "accreditor": "accreditor"
+    },
+    "formA": {
+        "practice_manager": "practice_manager",
+        "super_admin": "super_admin",
+        "principal_supervisor": "principal_supervisor",
+        "accreditation_support_coordinator": "accreditation_support_coordinator"
+    },
+    "formA1": {
+        "supervisor": "supervisor",
+        "super_admin": "super_admin",
+        "principal_supervisor": "principal_supervisor",
+        "practice_manager": "practice_manager",
+        "accreditation_support_coordinator": "accreditation_support_coordinator"
+    },
+    "formB": {
+        "accreditor": "accreditor",
+        "super_admin": "super_admin",
+        "accreditation_support_coordinator": "accreditation_support_coordinator"
+    },
+    "facilityAccess": {
+        "super_admin": "super_admin",
+        "accreditation_support_coordinator": "accreditation_support_coordinator"
+    }
+}
