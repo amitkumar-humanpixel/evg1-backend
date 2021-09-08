@@ -17,17 +17,16 @@ import { SupervisorRegistrationFormModule } from './SupervisorRegistrationForm/s
 import { TasksModule } from './Task/task.module';
 import { UserModule } from './User/user.module';
 
-const dbOptions = {
-  poolSize: 5,
-  reconnectTries: Number.MAX_SAFE_INTEGER,
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-};
-
 @Module({
   imports: [
     ConfigModule.forRoot({ envFilePath: `.env` }),
-    MongooseModule.forRoot(process.env.MONGODB_URL, dbOptions),
+    MongooseModule.forRoot(process.env.MONGODB_URL, {
+      poolSize: 5,
+      reconnectTries: Number.MAX_SAFE_INTEGER,
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+      autoCreate: (process.env.MONGODB_AUTOCREATE == 'true')
+    }),
     MulterModule.register({
       dest: './Files',
     }),
