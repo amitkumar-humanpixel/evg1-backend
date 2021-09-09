@@ -42,6 +42,3 @@ lerna-debug.log*
 .env
 .env
 .env.exmple
-docker-compose.yml
-Dockerfile
-dockerignore

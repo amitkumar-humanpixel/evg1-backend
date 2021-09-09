@@ -8,6 +8,7 @@ import { FormA1Controller } from './formA1.controller';
 import { FormA1DAL } from './formA1.dal';
 import { FormA1Service } from './formA1.service';
 import { UserModule } from 'src/User/user.module';
+import { SupervisorTempDetailModule } from 'src/SupervisorTempDetails/supervisorTempDetails.module';
 
 @Module({
   imports: [
@@ -16,7 +17,7 @@ import { UserModule } from 'src/User/user.module';
     forwardRef(() => AccreditionModule),
     forwardRef(() => FormAModule),
     forwardRef(() => FormBModule),
-    forwardRef(() => UserModule),
+    forwardRef(() => SupervisorTempDetailModule),
   ],
   controllers: [FormA1Controller],
   providers: [FormA1Service, FormA1DAL],

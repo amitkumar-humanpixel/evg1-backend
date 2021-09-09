@@ -105,12 +105,8 @@ export class RegistrarDetail extends RegistrarDetailsDTO {
 }
 
 export class SupervisorDetailsDTO {
-  @IsNotEmpty({ message: 'User Id should not be empty' })
-  @IsNumber({ allowNaN: false }, { message: 'User Id should be number' })
   userId: number | IUser;
-  @IsNotEmpty({ message: 'Contact Number should not be empty' })
   contactNumber: string;
-  @IsNotEmpty({ message: 'Category of Supervisor should not be empty' })
   categoryOfSupervisor: string;
   isFormA1Complete: boolean;
   isNotify: boolean;

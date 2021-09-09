@@ -14,6 +14,7 @@ import { OktaGuard } from 'src/Guard/okta.guard';
 import { DashboardService } from './dashboard.service';
 
 @Controller('dashboard')
+@UseGuards(OktaGuard)
 @UseFilters(new HttpExceptionFilter())
 export class DashboardController {
   constructor(private readonly dashboardService: DashboardService) {}

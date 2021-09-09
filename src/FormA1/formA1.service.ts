@@ -15,18 +15,19 @@ import {
 import { IFormA1 } from './formA1.interface';
 import { mailSender } from 'src/Listeners/mail.listener';
 import { UserService } from 'src/User/user.service';
+import { SupervisorTempDetailService } from 'src/SupervisorTempDetails/supervisorTempDetails.service';
 @Injectable()
 export class FormA1Service {
   constructor(
-    private formA1DAL: FormA1DAL,
+    private readonly formA1DAL: FormA1DAL,
     @Inject(forwardRef(() => FormAService))
-    private formAService: FormAService,
+    private readonly formAService: FormAService,
     @Inject(forwardRef(() => AccreditionService))
-    private accreditionService: AccreditionService,
+    private readonly accreditionService: AccreditionService,
     @Inject(forwardRef(() => FormBService))
-    private formBService: FormBService,
-    @Inject(forwardRef(() => UserService))
-    private userService: UserService,
+    private readonly formBService: FormBService,
+    private readonly userService: UserService,
+    private readonly tempSupervisorDetail: SupervisorTempDetailService,
   ) {}
 
   async getSupervisors(
@@ -54,6 +55,10 @@ export class FormA1Service {
     accreditionId: ObjectId,
     supervisor: SupervisorDetailsDTOA1,
   ): Promise<void> {
+    this.tempSupervisorDetail.deleteSupervisorDetail(
+      accreditionId,
+      supervisor.userId as number,
+    );
     const objFormA1 = await this.formA1DAL.getFormA1ByAccreditionId(
       accreditionId,
     );
@@ -124,21 +129,48 @@ export class FormA1Service {
     //   }
     // }
   }
+
+  async submitTempSupervisorDetail(
+    accreditionId: ObjectId,
+    supervisor: SupervisorDetailsDTOA1,
+  ) {
+    await this.tempSupervisorDetail.submitSupervisorDetail(
+      accreditionId,
+      supervisor,
+    );
+  }
+
   async getSupervisorsDetails(
     id: ObjectId,
     userId: number,
   ): Promise<GetSupervisorDetail> {
-    const responseData = await this.formA1DAL.getSupervisorsDetails(id);
-    const userData = responseData.supervisorDetails.find(
-      (x) => x.userId == userId,
-    );
-
+    const tempDetails =
+      await this.tempSupervisorDetail.getSupervisorTempDetailsByAccreditionId(
+        id,
+        userId,
+      );
     const response = new GetSupervisorDetail();
-    response.hours = userData?.hours ?? undefined;
-    response.userId = userData?.userId ?? undefined;
-    response.categoryOfSupervisor = userData?.categoryOfSupervisor ?? '';
-    response.standardsDetail = userData?.standardsDetail ?? undefined;
-    response.contactNumber = userData?.contactNumber ?? '';
+    if (tempDetails.length == 0) {
+      const responseData = await this.formA1DAL.getSupervisorsDetails(id);
+      const userData = responseData.supervisorDetails.find(
+        (x) => x.userId == userId,
+      );
+
+      response.hours = userData?.hours ?? undefined;
+      response.userId = userData?.userId ?? undefined;
+      response.categoryOfSupervisor = userData?.categoryOfSupervisor ?? '';
+      response.standardsDetail = userData?.standardsDetail ?? undefined;
+      response.contactNumber = userData?.contactNumber ?? '';
+    } else {
+      const details = tempDetails[0];
+      response.hours = details?.supervisorDetails?.hours ?? undefined;
+      response.userId = details?.supervisorDetails?.userId ?? undefined;
+      response.categoryOfSupervisor =
+        details?.supervisorDetails?.categoryOfSupervisor ?? '';
+      response.standardsDetail =
+        details?.supervisorDetails?.standardsDetail ?? undefined;
+      response.contactNumber = details?.supervisorDetails.contactNumber ?? '';
+    }
 
     return response;
   }

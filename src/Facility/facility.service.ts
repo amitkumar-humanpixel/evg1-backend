@@ -29,9 +29,8 @@ export class FacilityService {
     @Inject(forwardRef(() => AccreditionService))
     private accreditionService: AccreditionService,
     @Inject(forwardRef(() => FacilityStaffService))
-    private facilityStaffService: FacilityStaffService,
-    @Inject(forwardRef(() => UserService))
-    private userService: UserService,
+    private readonly facilityStaffService: FacilityStaffService,
+    private readonly userService: UserService,
   ) {}
 
   async insertFacility(facility: FacilityDTO): Promise<IFacility> {

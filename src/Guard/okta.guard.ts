@@ -28,8 +28,7 @@ export class OktaGuard implements CanActivate, OnModuleInit {
       const token = context.getArgs()[0]?.headers?.authorization.split(' ')[1];
       return this.oktaJwtVerifier
         .verifyAsPromise(token)
-        .then((jwt) => {
-          console.log(jwt);
+        .then(() => {
           return true;
         })
         .catch((error) => {

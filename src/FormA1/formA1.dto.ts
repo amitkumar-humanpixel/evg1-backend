@@ -46,21 +46,13 @@ export class FormA1DTO {
 
 export class TimeDTO {
   isChecked: boolean;
-  @IsNotEmpty({ message: 'Days should not be empty' })
   days: string;
-  @IsNotEmpty({ message: 'Hours should not be empty' })
   hours: number;
-  @IsNotEmpty({ message: 'Start Time should not be empty' })
   startTime: number;
-  @IsNotEmpty({ message: 'Finish TIme should not be empty' })
   finishTime: number;
 }
 export class SupervisorDetailsDTOA1 extends SupervisorDetailsDTO {
-  @Type(() => TimeDTO)
-  @ValidateNested({ each: true })
   hours: TimeDTO[];
-  @Type(() => standardsDetailDTO)
-  @ValidateNested({ each: true })
   standardsDetail: standardsDetailDTO[];
   isFormA1Complete: boolean;
   constructor() {
@@ -71,9 +63,7 @@ export class SupervisorDetailsDTOA1 extends SupervisorDetailsDTO {
 }
 
 export class standardsDetailDTO {
-  @IsNotEmpty({ message: 'Standards Detail title should not be empty' })
   title: string;
-  @IsNotEmpty({ message: 'Standards Detail status should not be empty' })
   status: boolean;
   filePath: string;
 }

@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { MulterModule } from '@nestjs/platform-express';
 import { ScheduleModule } from '@nestjs/schedule';
+import { AccreditionModule } from './Accredition/accredition.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { DashboardModule } from './Dashboard/dashboard.module';
@@ -12,14 +13,15 @@ import { FacilityStaffModule } from './FacilityStaff/facilityStaff.module';
 import { FileUploadModule } from './FileUpload/fileupload.module';
 
 import { FormAModule } from './FormA/formA.module';
+import { FormA1Module } from './FormA1/formA1.module';
 import { FormBModule } from './FormB/formB.module';
 import { SupervisorRegistrationFormModule } from './SupervisorRegistrationForm/supervisorRegistrationForm.module';
+import { SupervisorTempDetailModule } from './SupervisorTempDetails/supervisorTempDetails.module';
 import { TasksModule } from './Task/task.module';
 import { UserModule } from './User/user.module';
 
 const dbOptions = {
-  poolSize: 5,
-  reconnectTries: Number.MAX_SAFE_INTEGER,
+  poolSize: 10,
   useNewUrlParser: true,
   useUnifiedTopology: true,
 };
@@ -35,11 +37,14 @@ const dbOptions = {
     TasksModule,
     FileUploadModule,
     FacilityModule,
-    DashboardModule,
     UserModule,
     FacilityRegistrarModule,
     FacilityStaffModule,
+    AccreditionModule,
+    DashboardModule,
+    SupervisorTempDetailModule,
     FormAModule,
+    FormA1Module,
     FormBModule,
     SupervisorRegistrationFormModule,
   ],

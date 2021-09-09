@@ -139,6 +139,25 @@ export class FormA1Controller {
     }
   }
 
+  @Post('submitTempSupervisorDetail/:id')
+  async submitTempSupervisorDetail(
+    @Res() res,
+    @Body() supervisor: SupervisorDetailsDTOA1,
+    @Param('id', ParseObjectIdPipe) id: ObjectId,
+  ) {
+    try {
+      await this.formA1Service.submitTempSupervisorDetail(id, supervisor);
+      return res
+        .status(HttpStatus.OK)
+        .json(ApiResponseDTO.setResponse('SUCCESS', 'Update successfully!'));
+    } catch (error: any) {
+      console.log(error);
+      return res
+        .status(HttpStatus.BAD_REQUEST)
+        .json(ApiResponseDTO.setResponse('ERROR', error['message']));
+    }
+  }
+
   @Post('submitFinalCheckList/:id')
   @UsePipes(new ValidationPipe({ transform: true }))
   async submitFinalCheckList(

@@ -1,9 +1,4 @@
-import {
-  BadRequestException,
-  forwardRef,
-  Inject,
-  Injectable,
-} from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { ResponseHeaders } from 'src/Common/common.dto';
 import { AccreditionService } from 'src/Accredition/accredition.service';
 import { UserService } from 'src/User/user.service';
@@ -12,10 +7,8 @@ import { DashboardResult, GetDashboardDTOResponse } from './dashboard.dto';
 @Injectable()
 export class DashboardService {
   constructor(
-    @Inject(forwardRef(() => AccreditionService))
-    private accreditionService: AccreditionService,
-    @Inject(forwardRef(() => UserService))
-    private userService: UserService,
+    private readonly accreditionService: AccreditionService,
+    private readonly userService: UserService,
   ) {}
 
   async getDashboardStatusDetails(userId: number) {
@@ -38,31 +31,6 @@ export class DashboardService {
       } else {
         data = await this.accreditionService.getDashboardStatusDetails(userId);
       }
-      // data = JSON.parse(JSON.stringify(data));
-      // for (let i = 0; i < this.sequence.length; i++) {
-      //   const categoryIdMap = data.map((m) => m._id);
-
-      //   const categoryIndex = categoryIdMap.indexOf(this.sequence.toString());
-      //   if (categoryIndex !== -1) {
-      //     // console.log('i::', i, '  categoryIndex::', categoryIndex)
-      //     const category = data.splice(categoryIndex, 1);
-      //     // console.log('unshifting::', category, category[0]['_id'])
-      //     data.unshift(category[0]);
-      //   }
-      // }
-
-      // data.sort((a, b) => {
-      //   const fa = a._id.toLowerCase(),
-      //     fb = b._id.toLowerCase();
-
-      //   if (fa < fb) {
-      //     return -1;
-      //   }
-      //   if (fa > fb) {
-      //     return 1;
-      //   }
-      //   return 0;
-      // });
       return data;
     } else {
       throw new BadRequestException('Invalid UserId!');

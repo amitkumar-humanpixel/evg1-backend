@@ -26,12 +26,10 @@ import {
 @Injectable()
 export class AccreditionService {
   constructor(
-    private accreditionDAL: AccreditionDAL,
-    private facilityDAL: FacilityDAL,
-    @Inject(forwardRef(() => UserService))
-    private userService: UserService,
-    @Inject(forwardRef(() => FacilityStaffService))
-    private facilityStaffService: FacilityStaffService,
+    private readonly accreditionDAL: AccreditionDAL,
+    private readonly facilityDAL: FacilityDAL,
+    private readonly userService: UserService,
+    private readonly facilityStaffService: FacilityStaffService,
   ) {}
 
   async updateAccredition(postDetail: PostDetailAddDTO): Promise<ObjectId> {

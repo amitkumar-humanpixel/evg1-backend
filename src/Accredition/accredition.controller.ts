@@ -16,6 +16,7 @@ import {
 import { ObjectId } from 'mongoose';
 import { ApiResponseDTO } from 'src/Common/common.dto';
 import { HttpExceptionFilter } from 'src/Filter/exception.filter';
+import { AccreditionGuard } from 'src/Guard/accredition.guard';
 import { OktaGuard } from 'src/Guard/okta.guard';
 import { ParseObjectIdPipe } from 'src/Pipe/objectId.pipe';
 import { CreateReqAccreditationDTO, PostDetailAddDTO } from './accredition.dto';
@@ -23,6 +24,7 @@ import { AccreditionService } from './accredition.service';
 
 @Controller('accredited')
 @UseFilters(new HttpExceptionFilter())
+@UseGuards(OktaGuard)
 export class AccreditionController {
   constructor(private readonly accreditionService: AccreditionService) {}
 
