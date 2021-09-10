@@ -16,7 +16,11 @@ import { ObjectId } from 'mongoose';
 import { ApiResponseDTO } from 'src/Common/common.dto';
 import { HttpExceptionFilter } from 'src/Filter/exception.filter';
 import { ParseObjectIdPipe } from 'src/Pipe/objectId.pipe';
-import { AssignAccreditorDetailDTO, OtherDetailsDTO, SummaryDTO } from './formB.dto';
+import {
+  AssignAccreditorDetailDTO,
+  OtherDetailsDTO,
+  SummaryDTO,
+} from './formB.dto';
 import { FormBService } from './formB.service';
 import { FormBGuard } from 'src/Guard/formB.guard';
 import { OktaGuard } from 'src/Guard/okta.guard';
@@ -24,6 +28,7 @@ import { OktaGuard } from 'src/Guard/okta.guard';
 @Controller('formB')
 @UseFilters(new HttpExceptionFilter())
 @UseGuards(FormBGuard)
+@UseGuards(OktaGuard)
 export class FormBController {
   constructor(private readonly formBService: FormBService) {}
 

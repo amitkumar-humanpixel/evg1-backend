@@ -5,9 +5,7 @@ import {
   Injectable,
 } from '@nestjs/common';
 import { ObjectId } from 'mongoose';
-import { FacilityDAL } from 'src/Facility/facility.dal';
 import { IFacility } from 'src/Facility/facility.interface';
-import { FacilityStaffService } from 'src/FacilityStaff/facilityStaff.service';
 import { SupervisorDetailsDTO } from 'src/FormA/formA.dto';
 import { UserService } from 'src/User/user.service';
 import { AccreditionDAL } from './accredition.dal';
@@ -27,9 +25,8 @@ import {
 export class AccreditionService {
   constructor(
     private readonly accreditionDAL: AccreditionDAL,
-    private readonly facilityDAL: FacilityDAL,
+    @Inject(forwardRef(() => UserService))
     private readonly userService: UserService,
-    private readonly facilityStaffService: FacilityStaffService,
   ) {}
 
   async updateAccredition(postDetail: PostDetailAddDTO): Promise<ObjectId> {
@@ -48,42 +45,6 @@ export class AccreditionService {
       accreditionId,
     );
     return response[0];
-  }
-
-  async createAccredition(facilityId: number): Promise<void> {
-    const users = await this.userService.getSuperAdmins();
-    const accreditors =
-      await this.facilityStaffService.getAccreditorByFacilityId(facilityId);
-    const facility = await this.facilityDAL.getFacilityByFacilityId(facilityId);
-
-    const objAccredition = new CreateAccreditionDTO();
-    objAccredition.facilityId = facilityId;
-    objAccredition.address = facility.address;
-    objAccredition.status = 'INCOMPLETE';
-    objAccredition.users = new Array<number>();
-    for (let index = 0; index < users.length; index++) {
-      const element = users[index];
-      objAccredition.users.push(element.userId);
-    }
-    for (let index = 0; index < accreditors.length; index++) {
-      const element = accreditors[index];
-      objAccredition.users.push(element.userId as number);
-    }
-    objAccredition.users.push(facility.userId);
-    objAccredition.formA = new Array<formClass>();
-    objAccredition.formA.push(new formClass('Practice Manager', false));
-    objAccredition.formA.push(new formClass('Standards', false));
-    objAccredition.formA.push(new formClass('Supervisor', false));
-    objAccredition.formA.push(new formClass('Registrar', false));
-    objAccredition.formA1 = new Array<formClass>();
-    objAccredition.formA1.push(new formClass('Final CheckList', false));
-    objAccredition.formB = new Array<formClass>();
-    objAccredition.formB.push(new formClass('Assign Accreditor', false));
-    objAccredition.formB.push(new formClass('Summary', false));
-    objAccredition.formB.push(new formClass('Declaration', false));
-
-    await this.accreditionDAL.createAccredition(objAccredition);
-    // need to add sending mail facility to PM
   }
 
   async createAccreditionByFacility(
@@ -138,6 +99,7 @@ export class AccreditionService {
         user.role.toLowerCase() === 'accreditor' ? false : true;
       const resAccredition = new AccreditionDTO();
       resAccredition.accreditionId = accredition?._id ?? undefined;
+      resAccredition.facilityId = accredition?.facilityId ?? undefined;
       resAccredition.accreditionName =
         accredition?.facility?.practiceName ?? '';
       const arrSideBar = new Array<AccreditionSideBarDTO>();
@@ -255,132 +217,6 @@ export class AccreditionService {
     }
   }
 
-  // async getAccreditionSideBarOld(
-  //   id: ObjectId,
-  //   userId: number,
-  // ): Promise<AccreditionDTO> {
-  //   const user = await this.userService.getUserByUserId(userId);
-  //   console.log(user);
-  //   const accredition = await this.accreditionDAL.getAccreditionById(id);
-  //   console.log(accredition);
-  //   if (user === null) {
-  //     throw new BadRequestException('User does not exist!');
-  //   }
-  //   if (accredition !== null) {
-  //     const resAccredition = new AccreditionDTO();
-  //     resAccredition.accreditionId = accredition._id;
-  //     const arrSideBar = new Array<AccreditionSideBarDTO>();
-
-  //     let obj = new AccreditionSideBarDTO();
-  //     if (
-  //       user.role.toLowerCase().includes('practice_manager') ||
-  //       user.role.toLowerCase() === 'principal_supervisor' ||
-  //       user.role.toLowerCase().includes('accreditation_support_coordinator') ||
-  //       user.role.toLowerCase().includes('super_admin')
-  //     ) {
-  //       obj.addDetails('Post Details', accredition.isPostDetailsComplete);
-  //       arrSideBar.push(obj);
-
-  //       for (let i = 0; i < accredition.formA.length; i++) {
-  //         if (i == 0) {
-  //           obj = new AccreditionSideBarDTO();
-  //           if (accredition.formA.some((x) => x.isComplete == false)) {
-  //             obj.addDetails('Form A', false);
-  //           } else {
-  //             obj.addDetails('Form A', true);
-  //           }
-  //         }
-
-  //         const element = accredition.formA[i];
-  //         const form = new formClass(element.stepName, element.isComplete);
-  //         obj.addSubSteps(form);
-  //       }
-  //       arrSideBar.push(obj);
-  //     }
-  //     console.log(user.role);
-  //     if (
-  //       user.role.toLowerCase().includes('practice_manager') ||
-  //       user.role.toLowerCase() === 'principal_supervisor' ||
-  //       user.role.toLowerCase() === 'supervisor' ||
-  //       user.role.toLowerCase().includes('accreditation_support_coordinator') ||
-  //       user.role.toLowerCase().includes('super_admin')
-  //     ) {
-  //       const isAdd = accredition.formA1.some(
-  //         (x) => parseInt(x.userId) === user.userId,
-  //       );
-  //       if (
-  //         isAdd ||
-  //         user.role.toLowerCase().includes('super_admin') ||
-  //         user.role
-  //           .toLowerCase()
-  //           .includes('accreditation_support_coordinator') ||
-  //         user.role.toLowerCase().includes('practice_manager')
-  //       ) {
-  //         for (let i = 0; i < accredition.formA1.length; i++) {
-  //           if (i == 0) {
-  //             obj = new AccreditionSideBarDTO();
-  //             if (accredition.formA1.some((x) => x.isComplete === false)) {
-  //               obj.addDetails('Form A1', false);
-  //             } else {
-  //               obj.addDetails('Form A1', true);
-  //             }
-  //           }
-  //           const element = accredition.formA1[i];
-  //           const form = new formClass(
-  //             element.stepName,
-  //             element.isComplete,
-  //             element.userId,
-  //           );
-  //           obj.addSubSteps(form);
-  //           if (parseInt(element.userId) == user.userId) {
-  //             obj = new AccreditionSideBarDTO();
-  //             obj.addDetails('Form A1', false);
-  //             obj.addSubSteps(form);
-  //             break;
-  //           }
-  //         }
-  //         arrSideBar.push(obj);
-  //       }
-  //     }
-
-  //     if (
-  //       user.role.toLowerCase().includes('accreditor') ||
-  //       user.role.toLowerCase().includes('accreditation_support_coordinator') ||
-  //       user.role.toLowerCase().includes('super_admin')
-  //     ) {
-  //       for (let i = 0; i < accredition.formB.length; i++) {
-  //         if (i == 0) {
-  //           obj = new AccreditionSideBarDTO();
-  //           if (accredition.formB.some((x) => x.isComplete === false)) {
-  //             obj.addDetails('Form B', false);
-  //           } else {
-  //             obj.addDetails('Form B', true);
-  //           }
-  //         }
-
-  //         const element = accredition.formB[i];
-  //         if (
-  //           !user.role
-  //             .toLowerCase()
-  //             .includes('accreditation_support_coordinator') &&
-  //           !user.role.toLowerCase().includes('super_admin') &&
-  //           element.stepName === 'Assign Accreditor'
-  //         ) {
-  //           continue;
-  //         }
-  //         const form = new formClass(element.stepName, element.isComplete);
-  //         obj.addSubSteps(form);
-  //       }
-  //       arrSideBar.push(obj);
-  //     }
-
-  //     resAccredition.accreditionSideBar = arrSideBar;
-  //     return resAccredition;
-  //   } else {
-  //     throw new BadRequestException('Facility does not exist!');
-  //   }
-  // }
-
   async getAccreditionDetailByUserId(
     userId: number,
   ): Promise<AccreditionDetails> {
@@ -422,27 +258,19 @@ export class AccreditionService {
   }
 
   async getDashboardData(
-    userId: number,
     page: number,
     limit: number,
     status: string,
   ): Promise<any> {
-    return await this.accreditionDAL.getDashboardData(
-      userId,
-      page,
-      limit,
-      status,
-    );
+    return await this.accreditionDAL.getDashboardData(0, page, limit, status);
   }
 
   async getPracticeManagerDashboardStatusDetails(userId: number): Promise<any> {
-    return await this.accreditionDAL.getPracticeManagerDashboardStatusData(
-      userId,
-    );
+    return await this.accreditionDAL.getDashboardStatusData(userId);
   }
 
-  async getDashboardStatusDetails(userId: number): Promise<any> {
-    return await this.accreditionDAL.getDashboardStatusData(userId);
+  async getDashboardStatusDetails(): Promise<any> {
+    return await this.accreditionDAL.getDashboardStatusData(0);
   }
 
   async getSupervisorDashboardStatusDetails(userId: number): Promise<any> {
@@ -593,7 +421,12 @@ export class AccreditionService {
         element.userId as number,
       );
       if (accredition.users != undefined) {
-        accredition.users.unshift(element.userId.toString());
+        const existingUser = accredition.users.find(
+          (x) => x == element.userId.toString(),
+        );
+        if (existingUser == undefined) {
+          accredition.users.unshift(element.userId.toString());
+        }
       }
       accredition.formA1.unshift(
         new formClass(
@@ -716,6 +549,22 @@ export class AccreditionService {
           accredition,
         );
       }
+    }
+  }
+
+  async addSuperAdminAndASC(userIds: number[]) {
+    const accreditions = await this.accreditionDAL.getAllAccreditions();
+
+    for (let index = 0; index < accreditions.length; index++) {
+      const element = accreditions[index];
+      for (let i = 0; i < userIds.length; i++) {
+        const some = (value) => value.toString() === userIds[i].toString();
+        const existingUser = element.users.some(some);
+        if (existingUser === false) {
+          element.users.push(userIds[i].toString());
+        }
+      }
+      await this.accreditionDAL.updateAccreditionById(element._id, element);
     }
   }
 

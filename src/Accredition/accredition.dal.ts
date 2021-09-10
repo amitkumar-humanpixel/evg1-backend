@@ -23,6 +23,9 @@ export class AccreditionDAL {
     return newAccredition;
   }
 
+  async getAllAccreditions(): Promise<IAccredition[]> {
+    return await this.accreditionModel.find({});
+  }
   async updateAccredition(accredition: PostDetailAddDTO): Promise<ObjectId> {
     const objAccredition = await this.accreditionModel.findOneAndUpdate(
       { facilityId: accredition.facilityId },
@@ -53,10 +56,6 @@ export class AccreditionDAL {
       .findOne({ users: { $in: [userId.toString()] } })
       .lean()
       .exec();
-  }
-
-  async getAllAccreditions(): Promise<IAccredition[]> {
-    return await this.accreditionModel.find({}).lean().exec();
   }
 
   async getAccreditionById(accreditionId: ObjectId): Promise<IAccredition> {
@@ -311,31 +310,32 @@ export class AccreditionDAL {
     return await this.accreditionModel.aggregate(query).allowDiskUse(true);
   }
 
-  async getPracticeManagerDashboardStatusData(userId: number): Promise<any> {
-    const query: any = [];
+  // async getPracticeManagerDashboardStatusData(userId: number): Promise<any> {
+  //   const query: any = [];
 
-    query.push({
-      $match: {
-        users: { $in: [userId.toString()] },
-      },
-    });
+  //   query.push({
+  //     $match: {
+  //       users: { $in: [userId.toString()] },
+  //     },
+  //   });
 
-    query.push({
-      $group: {
-        _id: '$status',
-        count: { $sum: 1 },
-      },
-    });
+  //   query.push({
+  //     $group: {
+  //       _id: '$status',
+  //       count: { $sum: 1 },
+  //     },
+  //   });
 
-    return await this.accreditionModel.aggregate(query).allowDiskUse(true);
-  }
+  //   return await this.accreditionModel.aggregate(query).allowDiskUse(true);
+  // }
 
   async getDashboardStatusData(userId: number) {
     const query: any = [];
-
-    query.push({
-      $match: { users: { $in: [userId.toString()] } },
-    });
+    if (userId != 0) {
+      query.push({
+        $match: { users: { $in: [userId.toString()] } },
+      });
+    }
 
     query.push({
       $group: {

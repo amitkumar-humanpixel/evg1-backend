@@ -26,12 +26,16 @@ import { ApiResponseDTO } from 'src/Common/common.dto';
 import { HttpExceptionFilter } from 'src/Filter/exception.filter';
 import { ParseObjectIdPipe } from 'src/Pipe/objectId.pipe';
 import { OktaGuard } from 'src/Guard/okta.guard';
+import { CSVParser } from 'src/Helper/csv.helper';
 
 @Controller('facility')
 @UseGuards(OktaGuard)
 @UseFilters(new HttpExceptionFilter())
 export class FacilityController {
-  constructor(private readonly facilityService: FacilityService) {}
+  constructor(
+    private readonly facilityService: FacilityService,
+    private readonly csvParser: CSVParser,
+  ) {}
 
   @Post()
   @UsePipes(new ValidationPipe({ transform: true }))
@@ -120,10 +124,7 @@ export class FacilityController {
         });
       }
       console.log(file.mimetype);
-      if (
-        file.mimetype === 'text/csv' ||
-        file.mimetype === 'application/vnd.ms-excel'
-      ) {
+      if (await this.csvParser.validateCSVFile(file)) {
         const responseData = await this.facilityService.readAndStoreFacility(
           file.buffer,
           parseInt(headers.userid),

@@ -20,16 +20,16 @@ import { SupervisorTempDetailModule } from './SupervisorTempDetails/supervisorTe
 import { TasksModule } from './Task/task.module';
 import { UserModule } from './User/user.module';
 
+const dbOptions = {
+  poolSize: 10,
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+};
+
 @Module({
   imports: [
     ConfigModule.forRoot({ envFilePath: `.env` }),
-    MongooseModule.forRoot(process.env.MONGODB_URL, {
-      poolSize: 5,
-      reconnectTries: Number.MAX_SAFE_INTEGER,
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-      autoCreate: process.env.MONGODB_AUTOCREATE == 'true',
-    }),
+    MongooseModule.forRoot(process.env.MONGODB_URL, dbOptions),
     MulterModule.register({
       dest: './Files',
     }),

@@ -29,7 +29,7 @@ export class DashboardService {
             userId,
           );
       } else {
-        data = await this.accreditionService.getDashboardStatusDetails(userId);
+        data = await this.accreditionService.getDashboardStatusDetails();
       }
       return data;
     } else {
@@ -45,7 +45,10 @@ export class DashboardService {
   ): Promise<any> {
     const user = await this.userService.getUserByUserId(userId);
     if (user != null) {
-      if (user.role.toLowerCase().includes('admin')) {
+      if (
+        user.role.toLowerCase().includes('admin') ||
+        user.role.toLowerCase() === 'accreditation_support_coordinator'
+      ) {
         userId = 0;
       }
       let data;
@@ -62,7 +65,8 @@ export class DashboardService {
         currentStatus = supervisorStatus ? 'COMPLETE' : 'INCOMPLETE';
       } else if (
         user.role.toLowerCase() === 'practice_manager' ||
-        user.role.toLowerCase() === 'principal_supervisor'
+        user.role.toLowerCase() === 'principal_supervisor' ||
+        user.role.toLowerCase() === 'accreditor'
       ) {
         data = await this.accreditionService.getPracticeManagerDashboardData(
           userId,
@@ -72,7 +76,6 @@ export class DashboardService {
         );
       } else {
         data = await this.accreditionService.getDashboardData(
-          userId,
           page,
           limit,
           status,

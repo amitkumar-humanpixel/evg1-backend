@@ -25,11 +25,16 @@ import { ApiResponseDTO } from 'src/Common/common.dto';
 import { OktaGuard } from 'src/Guard/okta.guard';
 import { ParseObjectIdPipe } from 'src/Pipe/objectId.pipe';
 import { HttpExceptionFilter } from 'src/Filter/exception.filter';
+import { CSVParser } from 'src/Helper/csv.helper';
 
 @Controller('facility-staff')
+@UseGuards(OktaGuard)
 @UseFilters(new HttpExceptionFilter())
 export class FacilityStaffController {
-  constructor(private readonly facilityStaffService: FacilityStaffService) {}
+  constructor(
+    private readonly facilityStaffService: FacilityStaffService,
+    private readonly csvParser: CSVParser,
+  ) {}
 
   @Post()
   @UsePipes(new ValidationPipe({ transform: true }))
@@ -131,10 +136,7 @@ export class FacilityStaffController {
           message: 'Please select file!!',
         });
       }
-      if (
-        file.mimetype === 'text/csv' ||
-        file.mimetype === 'application/vnd.ms-excel'
-      ) {
+      if (await this.csvParser.validateCSVFile(file)) {
         const responseData =
           await this.facilityStaffService.readAndStoreFacilityStaff(
             file.buffer,

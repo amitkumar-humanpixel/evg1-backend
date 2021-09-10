@@ -75,6 +75,7 @@ export class AccreditionDetails {
 export class AccreditionDTO {
   accreditionId: ObjectId;
   accreditionName: string;
+  facilityId: number;
   accreditionSideBar: AccreditionSideBarDTO[];
 }
 

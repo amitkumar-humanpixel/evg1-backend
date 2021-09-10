@@ -178,35 +178,37 @@ export class FacilityService {
         await this.accreditionService.getAccreditionByFacilityId(
           element.facilityId as number,
         );
-      const practiceManager =
-        await this.facilityStaffService.getFacilityStaffByFacilityId(
-          element.facilityId,
-        );
-      for (let index = 0; index < practiceManager.length; index++) {
-        const practicemanager = practiceManager[index];
-        const practiceManagerData: any =
-          await this.userService.getUserAndFacilityDetails(
-            practicemanager.userId,
+      if (accredition != null) {
+        const practiceManager =
+          await this.facilityStaffService.getFacilityStaffByFacilityId(
+            element.facilityId,
           );
-        const link =
-          process.env.BASE_URL +
-          process.env.FORM_READY +
-          '?id=' +
-          accredition._id;
-        for (let j = 0; j < practiceManagerData.length; j++) {
-          mailSender(
-            practiceManagerData[j].email,
-            practiceManagerData[j].firstName,
-            practiceManagerData[j].lastName,
-            element.practiceName,
-            'Form Ready',
-            link,
-          );
+        for (let index = 0; index < practiceManager.length; index++) {
+          const practicemanager = practiceManager[index];
+          const practiceManagerData: any =
+            await this.userService.getUserAndFacilityDetails(
+              practicemanager.userId,
+            );
+          const link =
+            process.env.BASE_URL +
+            process.env.FORM_READY +
+            '?id=' +
+            accredition._id;
+          for (let j = 0; j < practiceManagerData.length; j++) {
+            mailSender(
+              practiceManagerData[j].email,
+              practiceManagerData[j].firstName,
+              practiceManagerData[j].lastName,
+              element.practiceName,
+              'Form Ready',
+              link,
+            );
+          }
         }
-      }
-      if (practiceManager.length > 0) {
-        element.isMailSent = true;
-        await this.facilityDAL.updateFacilityByFacilityDetails(element);
+        if (practiceManager.length > 0) {
+          element.isMailSent = true;
+          await this.facilityDAL.updateFacilityByFacilityDetails(element);
+        }
       }
     }
   }

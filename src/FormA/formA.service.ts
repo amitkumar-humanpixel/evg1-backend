@@ -155,23 +155,33 @@ export class FormAService {
   async getRegistrarDetails(accreditionId: ObjectId): Promise<any> {
     const registrarDetails =
       await this.formADAL.getFormARegistrarDataByAccreditionId(accreditionId);
+
     const arrRegistrar = new Array<RegistrarDetail>();
-    for (
-      let index = 0;
-      index < registrarDetails[0]?.registrarDetails?.length ?? 0;
-      index++
-    ) {
-      const element = registrarDetails[0].registrarDetails[index];
+    if (registrarDetails.length > 0) {
+      for (
+        let index = 0;
+        index < registrarDetails[0]?.registrarDetails.length ?? 0;
+        index++
+      ) {
+        const element = registrarDetails[0].registrarDetails[index];
 
-      const registrar = new RegistrarDetail();
-      registrar.hoursDetails = element.hoursDetails;
-      registrar.onCall = element.onCall;
-      registrar.note = element.note;
-      registrar.placementId = element.placementId;
-      registrar.name = `${registrarDetails[0].placement.firstName} ${registrarDetails[0].placement.lastName}`;
+        const registrar = new RegistrarDetail();
+        registrar.hoursDetails = element.hoursDetails;
+        registrar.onCall = element.onCall;
+        registrar.note = element.note;
+        registrar.placementId = element.placementId;
 
-      arrRegistrar.push(registrar);
+        const userData = registrarDetails[0].placement.find(
+          (x) => x.placementId == element.placementId,
+        );
+        registrar.name = `${userData?.firstName ?? ''} ${
+          userData?.lastName ?? ''
+        }`;
+
+        arrRegistrar.push(registrar);
+      }
     }
+
     return arrRegistrar;
   }
 

@@ -28,9 +28,9 @@ import { FormAGuard } from 'src/Guard/formA.guard';
 import { OktaGuard } from 'src/Guard/okta.guard';
 
 @Controller('formA')
-@UseFilters(new HttpExceptionFilter())
-@UseGuards(FormAGuard)
 @UseGuards(OktaGuard)
+@UseGuards(FormAGuard)
+@UseFilters(new HttpExceptionFilter())
 export class FormAController {
   constructor(private readonly formAService: FormAService) {}
 

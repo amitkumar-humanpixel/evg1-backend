@@ -159,11 +159,6 @@ export class FormADAL {
         as: 'placement',
       },
     });
-    query.push({
-      $unwind: {
-        path: '$placement',
-      },
-    });
 
     const output = await this.formAModel.aggregate(query);
     return output;

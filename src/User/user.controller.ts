@@ -26,11 +26,16 @@ import { OktaGuard } from 'src/Guard/okta.guard';
 import { HttpExceptionFilter } from 'src/Filter/exception.filter';
 import { FacilityGuard } from 'src/Guard/facility-access.guard';
 import { UserGuard } from 'src/Guard/user.guard';
+import { CSVParser } from 'src/Helper/csv.helper';
 
 @Controller('user')
+@UseGuards(OktaGuard)
 @UseFilters(new HttpExceptionFilter())
 export class UserController {
-  constructor(private readonly userService: UserService) {}
+  constructor(
+    private readonly userService: UserService,
+    private readonly csvParser: CSVParser,
+  ) {}
 
   @Post()
   @UsePipes(new ValidationPipe({ transform: true }))
@@ -115,11 +120,7 @@ export class UserController {
           message: 'Please select file!!',
         });
       }
-      console.log(file.mimetype);
-      if (
-        file.mimetype === 'text/csv' ||
-        file.mimetype === 'application/vnd.ms-excel'
-      ) {
+      if (await this.csvParser.validateCSVFile(file)) {
         const responseData = await this.userService.readAndStoreUser(
           file.buffer,
         );

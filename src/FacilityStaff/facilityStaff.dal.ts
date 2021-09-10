@@ -115,7 +115,10 @@ export class FacilityStaffDAL {
         $match: {
           facilityId: parseInt(id.toString()),
           isDeleted: false,
-          practiceRole: 'Clinical Supervisor',
+          $or: [
+            { practiceRole: 'Clinical Supervisor' },
+            { practiceRole: 'Educational Supervisor' },
+          ],
         },
       },
     ];

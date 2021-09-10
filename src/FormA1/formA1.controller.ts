@@ -24,6 +24,7 @@ import { OktaGuard } from 'src/Guard/okta.guard';
 
 @Controller('formA1')
 @UseGuards(FormA1Guard)
+@UseGuards(OktaGuard)
 @UseFilters(new HttpExceptionFilter())
 export class FormA1Controller {
   constructor(private readonly formA1Service: FormA1Service) {}

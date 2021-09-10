@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, forwardRef, Inject, Injectable } from '@nestjs/common';
 import {
   GetUserResponseDTO,
   IGetUserDTO,
@@ -11,10 +11,16 @@ import { ObjectId } from 'mongoose';
 import { ResponseHeaders } from 'src/Common/common.dto';
 import { CSVParser } from 'src/Helper/csv.helper';
 import { validateData } from '../Helper/validation.helper';
+import { AccreditionService } from 'src/Accredition/accredition.service';
 
 @Injectable()
 export class UserService {
-  constructor(private userDAL: UserDAL, private csvParser: CSVParser) {}
+  constructor(
+    private readonly userDAL: UserDAL,
+    private readonly csvParser: CSVParser,
+    @Inject(forwardRef(() => AccreditionService))
+    private readonly accreditionService: AccreditionService,
+  ) {}
 
   async insertUser(user: UserDTO): Promise<IUser> {
     return await this.userDAL.addUser(user);
@@ -95,6 +101,7 @@ export class UserService {
       processed: 0,
       ErrorDataCount: 0,
     };
+    const users = [];
     output = JSON.parse(JSON.stringify(output));
     for (let index = 0; index < output.length; index++) {
       const element = output[index];
@@ -140,6 +147,12 @@ export class UserService {
       const responseData = validateData(newUser);
       if (responseData.isValid === true) {
         await this.userDAL.findAndUpdateByUserId(newUser.usersId, newUser);
+        // if (
+        //   newUser.role == UserRoles.Accreditation_Support_Coordinator ||
+        //   newUser.role == UserRoles.Super_Admin
+        // ) {
+        //   users.push(newUser.usersId);
+        // }
         validationObject.processed++;
       } else {
         validationObject.ErrorData.push(
@@ -152,6 +165,11 @@ export class UserService {
         validationObject.ErrorDataCount++;
       }
     }
+
+    // if (users.length > 0) {
+    //   this.accreditionService.addSuperAdminAndASC(users);
+    // }
+
     return validationObject;
   }
   async getUserAndFacilityDetails(userId: number) {

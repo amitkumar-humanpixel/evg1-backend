@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import * as neatCsv from 'neat-csv';
+import { fromBuffer } from 'file-type';
 
 @Injectable()
 export class CSVParser {
@@ -15,5 +16,14 @@ export class CSVParser {
       }
     });
     return output;
+  }
+
+  async validateCSVFile(file: Express.Multer.File): Promise<boolean> {
+    const fileType = await fromBuffer(file.buffer);
+    if (fileType === undefined) {
+      return true;
+    } else {
+      return false;
+    }
   }
 }

@@ -115,12 +115,6 @@ export class AccreditionController {
     }
   }
 
-  @Post('create-accredition')
-  async createAccredition(@Res() res, @Body() body: CreateReqAccreditationDTO) {
-    await this.accreditionService.createAccredition(body.facilityId);
-    return res.status(HttpStatus.OK).json('DONE');
-  }
-
   @Get('accreditionSideBar/:id')
   async getAccreditionSideBar(
     @Res() res,
