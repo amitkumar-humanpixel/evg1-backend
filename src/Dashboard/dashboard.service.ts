@@ -9,7 +9,7 @@ export class DashboardService {
   constructor(
     private readonly accreditionService: AccreditionService,
     private readonly userService: UserService,
-  ) {}
+  ) { }
 
   async getDashboardStatusDetails(userId: number) {
     const user = await this.userService.getUserByUserId(userId);
@@ -22,7 +22,8 @@ export class DashboardService {
           );
       } else if (
         user.role.toLowerCase() === 'practice_manager' ||
-        user.role.toLowerCase() === 'principal_supervisor'
+        user.role.toLowerCase() === 'principal_supervisor' ||
+        user.role.toLowerCase() === 'accreditor'
       ) {
         data =
           await this.accreditionService.getPracticeManagerDashboardStatusDetails(
@@ -100,8 +101,8 @@ export class DashboardService {
           currentStatus === 'INCOMPLETE'
             ? currentStatus
             : currentStatus === 'COMPLETE'
-            ? currentStatus
-            : obj.status;
+              ? currentStatus
+              : obj.status;
         dashboardData.practiceName = obj.facility.practiceName;
         if (
           user.role.toLowerCase().includes('super_admin') ||

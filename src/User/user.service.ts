@@ -20,7 +20,7 @@ export class UserService {
     private readonly csvParser: CSVParser,
     @Inject(forwardRef(() => AccreditionService))
     private readonly accreditionService: AccreditionService,
-  ) {}
+  ) { }
 
   async insertUser(user: UserDTO): Promise<IUser> {
     return await this.userDAL.addUser(user);
@@ -75,7 +75,7 @@ export class UserService {
   }
 
   async getUserByEmail(email: string): Promise<IUser> {
-    const user = await this.userDAL.getUserByEmailId(email);
+    const user = await this.userDAL.getUserByEmailId(email.toLowerCase());
     if (!user) throw new BadRequestException('User does not exist!');
     return user;
   }
@@ -119,7 +119,7 @@ export class UserService {
         if (obj.trim() === 'UsersId') {
           newUser.usersId = parseInt(element[obj]);
         } else if (obj.trim() === 'Email') {
-          newUser.email = element[obj].trim();
+          newUser.email = element[obj]?.trim()?.toLowerCase() ?? undefined;
         } else if (obj.trim() === 'FirstName') {
           newUser.firstName = element[obj].trim();
         } else if (obj.trim() === 'LastName') {
@@ -156,10 +156,8 @@ export class UserService {
         validationObject.processed++;
       } else {
         validationObject.ErrorData.push(
-          `User Id : ${
-            newUser.usersId.toString() === 'NaN' ? '' : newUser.usersId
-          } its ${responseData?.key ?? ''} data is not proper, its data is ${
-            responseData?.value ?? ''
+          `User Id : ${newUser.usersId.toString() === 'NaN' ? '' : newUser.usersId
+          } its ${responseData?.key ?? ''} data is not proper, its data is ${responseData?.value ?? ''
           }, due to that it is not processed.`,
         );
         validationObject.ErrorDataCount++;

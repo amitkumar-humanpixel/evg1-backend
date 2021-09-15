@@ -6,7 +6,7 @@ export class SupervisorRegistrationFormService {
   constructor(
     @Inject(forwardRef(() => UserService))
     private userService: UserService,
-  ) {}
+  ) { }
 
   async getUserDetails(
     userId: number,
@@ -18,6 +18,7 @@ export class SupervisorRegistrationFormService {
     promiseArr.push(this.userService.getUserByUserId(userId));
     promiseArr.push(this.userService.getASCData());
     const userData = await Promise.all(promiseArr);
+    console.log(userData);
     for (let i = 0; i < userData[1].length; i++) {
       mailSenderForSupervisorRegistration(
         userData[1][i].firstName,

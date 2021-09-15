@@ -106,7 +106,7 @@ export class AccreditionService {
 
       let obj = new AccreditionSideBarDTO();
 
-      if (!user.role.toLowerCase().includes('supervisor')) {
+      if (user.role.toLowerCase() !== 'supervisor') {
         obj.addDetails('Post Details', accredition.isPostDetailsComplete);
         obj.isEditable = isEditable;
         arrSideBar.push(obj);
@@ -154,6 +154,7 @@ export class AccreditionService {
         user.role.toLowerCase().includes('super_admin') ||
         user.role.toLowerCase().includes('accreditation_support_coordinator') ||
         user.role.toLowerCase().includes('practice_manager') ||
+        user.role.toLowerCase().includes('principal_supervisor') ||
         user.role.toLowerCase() === 'accreditor'
       ) {
         for (let i = 0; i < accredition.formA1.length; i++) {
@@ -161,17 +162,29 @@ export class AccreditionService {
             obj = new AccreditionSideBarDTO();
             if (accredition.formA1.some((x) => x.isComplete === false)) {
               obj.addDetails('Form A1', false);
-              obj.isEditable = isEditable;
+              obj.isEditable = user.role
+                .toLowerCase()
+                .includes('principal_supervisor')
+                ? true
+                : isEditable;
             } else {
               obj.addDetails('Form A1', true);
-              obj.isEditable = isEditable;
+              obj.isEditable = user.role
+                .toLowerCase()
+                .includes('principal_supervisor')
+                ? true
+                : isEditable;
             }
           }
           const element = accredition.formA1[i];
           const form = new SideBarDataDTO(
             element.stepName,
             element.isComplete,
-            element.stepName.toLowerCase().includes('final') ? true : false,
+            element.stepName.toLowerCase().includes('final')
+              ? true
+              : user.role.toLowerCase().includes('principal_supervisor')
+              ? true
+              : false,
             element.userId,
           );
           obj.addSubSteps(form);

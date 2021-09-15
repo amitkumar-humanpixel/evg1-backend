@@ -29,7 +29,7 @@ export class FacilityStaffService {
     private accreditionService: AccreditionService,
     @Inject(forwardRef(() => FacilityService))
     private facilityService: FacilityService,
-  ) {}
+  ) { }
 
   async insertFacilityStaff(
     facilityStaff: FacilityStaffDTO,
@@ -212,7 +212,7 @@ export class FacilityStaffService {
         );
         if (
           newFacilityStaff.practiceRole === 'Practice Manager' ||
-          newFacilityStaff.practiceRole === 'Principal Supervisor'
+          newFacilityStaff.practiceRole === 'Principal Educational Supervisor'
         ) {
           facilitySet.add(newFacilityStaff.facilityId as number);
           await this.accreditionService.addPracticeManager(
@@ -223,10 +223,8 @@ export class FacilityStaffService {
         validationObject.processed++;
       } else {
         validationObject.ErrorData.push(
-          `Facility Id : ${newFacilityStaff.facilityId} its ${
-            responseData?.key ?? ''
-          } data is not proper, its data is ${
-            responseData?.value ?? ''
+          `Facility Id : ${newFacilityStaff.facilityId} its ${responseData?.key ?? ''
+          } data is not proper, its data is ${responseData?.value ?? ''
           }, due to that it is not processed.`,
         );
         validationObject.ErrorDataCount++;
