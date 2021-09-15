@@ -156,7 +156,7 @@ export class DashboardService {
         } else if (user.role.toLowerCase().includes('supervisor')) {
           for (let index = 0; index < obj.formA1.length; index++) {
             const element = obj.formA1[index];
-            if (!element.isComplete) {
+            if (!element.isComplete || element.isComplete) {
               dashboardData.formType = 'formA1';
               break;
             } else if (index == obj.formB.length - 1) {

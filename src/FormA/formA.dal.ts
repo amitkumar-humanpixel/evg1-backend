@@ -9,7 +9,7 @@ export class FormADAL {
   constructor(
     @InjectModel('formA')
     private readonly formAModel: Model<IFormA>,
-  ) {}
+  ) { }
 
   async addFormA(formA: FormADTO): Promise<string> {
     const newFormA = new this.formAModel(formA);

@@ -9,7 +9,7 @@ export class FormA1DAL {
   constructor(
     @InjectModel('formA1')
     private readonly formA1Model: Model<IFormA1>,
-  ) {}
+  ) { }
   async getSupervisorsDetails(accreditionId: ObjectId): Promise<IFormA1> {
     return await this.formA1Model
       .findOne({ accreditionId: accreditionId })
@@ -60,13 +60,16 @@ export class FormA1DAL {
         j < fileData.supervisorDetails[i].standardsDetail.length;
         j++
       ) {
-        if (
-          fileData.supervisorDetails[i].standardsDetail[j].filePath.includes(
-            process.env.BASE_URL + pathData[1],
-          )
-        ) {
-          fileData.supervisorDetails[i].standardsDetail[j].filePath = '';
-          break;
+        if (fileData?.supervisorDetails[i]?.standardsDetail[j]?.filePath) {
+          if (
+            fileData?.supervisorDetails[i]?.standardsDetail[
+              j
+            ]?.filePath.includes(process.env.BASE_URL + pathData[1]) ??
+            true
+          ) {
+            fileData.supervisorDetails[i].standardsDetail[j].filePath = '';
+            break;
+          }
         }
       }
     }

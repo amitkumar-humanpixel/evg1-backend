@@ -22,7 +22,7 @@ import * as fs from 'fs';
 @Controller('fileUploader')
 @UseFilters(new HttpExceptionFilter())
 export class FileUploadController {
-  constructor(private readonly FileServise: FileServise) {}
+  constructor(private readonly FileServise: FileServise) { }
   @Post('file')
   @UseInterceptors(
     FileInterceptor('file', {
@@ -54,7 +54,9 @@ export class FileUploadController {
     @Body() fileDTO: fileDTO,
     @Param('id') id: ObjectId,
   ) {
-    fs.unlinkSync(fileDTO.path);
+    if (fs.existsSync(fileDTO.path)) {
+      fs.unlinkSync(fileDTO.path);
+    }
     await this.FileServise.deleteFileService(id, fileDTO.status, fileDTO.path);
     return res.status(HttpStatus.OK).json({
       status: 'SUCCESS',

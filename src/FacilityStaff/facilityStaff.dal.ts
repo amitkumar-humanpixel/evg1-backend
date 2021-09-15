@@ -13,7 +13,7 @@ export class FacilityStaffDAL {
   constructor(
     @InjectModel('facility-staff')
     private readonly facilityStaffModel: Model<IFacilityStaff>,
-  ) {}
+  ) { }
 
   async addFacilityStaff(
     facilityStaff: FacilityStaffDTO,
@@ -118,6 +118,7 @@ export class FacilityStaffDAL {
           $or: [
             { practiceRole: 'Clinical Supervisor' },
             { practiceRole: 'Educational Supervisor' },
+            { practiceRole: 'Principal Educational Supervisor' },
           ],
         },
       },

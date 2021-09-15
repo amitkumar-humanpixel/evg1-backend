@@ -27,7 +27,7 @@ export class AccreditionService {
     private readonly accreditionDAL: AccreditionDAL,
     @Inject(forwardRef(() => UserService))
     private readonly userService: UserService,
-  ) {}
+  ) { }
 
   async updateAccredition(postDetail: PostDetailAddDTO): Promise<ObjectId> {
     postDetail.status = 'PENDING';
@@ -134,9 +134,9 @@ export class AccreditionService {
         }
         arrSideBar.push(obj);
       }
-
+      const isSupervisor = user.role.toLowerCase() === 'supervisor';
       const isAdd = accredition.formA1.filter(
-        (x) => parseInt(x.userId) === user.userId,
+        (x) => parseInt(x.userId) === user.userId && isSupervisor,
       );
       if (isAdd.length > 0) {
         const form = new SideBarDataDTO(
@@ -157,6 +157,7 @@ export class AccreditionService {
         user.role.toLowerCase().includes('principal_supervisor') ||
         user.role.toLowerCase() === 'accreditor'
       ) {
+        console.log(accredition.formA1);
         for (let i = 0; i < accredition.formA1.length; i++) {
           if (i == 0) {
             obj = new AccreditionSideBarDTO();
@@ -183,12 +184,13 @@ export class AccreditionService {
             element.stepName.toLowerCase().includes('final')
               ? true
               : user.role.toLowerCase().includes('principal_supervisor')
-              ? true
-              : false,
+                ? true
+                : false,
             element.userId,
           );
           obj.addSubSteps(form);
         }
+
         arrSideBar.push(obj);
       }
       if (
