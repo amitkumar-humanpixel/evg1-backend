@@ -110,6 +110,7 @@ export class SupervisorDetailsDTO {
   categoryOfSupervisor: string;
   isFormA1Complete: boolean;
   isNotify: boolean;
+  status: boolean;
 }
 
 export class GetSupervisorDetails {

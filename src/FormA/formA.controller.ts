@@ -12,6 +12,7 @@ import {
   UsePipes,
   ValidationPipe,
   UseGuards,
+  Delete,
 } from '@nestjs/common';
 import { ObjectId } from 'mongoose';
 import { ApiResponseDTO } from 'src/Common/common.dto';
@@ -32,7 +33,7 @@ import { OktaGuard } from 'src/Guard/okta.guard';
 @UseGuards(FormAGuard)
 @UseFilters(new HttpExceptionFilter())
 export class FormAController {
-  constructor(private readonly formAService: FormAService) {}
+  constructor(private readonly formAService: FormAService) { }
 
   @Get('practiceManagers/:facilityId')
   async getPracticeManagers(
@@ -264,6 +265,24 @@ export class FormAController {
     }
   }
 
+  @Delete('deleteSupervisor/:id/:userId')
+  async deleteSupervisor(
+    @Param('id', ParseObjectIdPipe) id: ObjectId,
+    @Param('userId', ParseIntPipe) userId: number,
+    @Res() res,
+  ) {
+    try {
+      await this.formAService.deleteSupervisorDetails(id, userId);
+      return res
+        .status(HttpStatus.OK)
+        .json(ApiResponseDTO.setResponse('SUCCESS', 'Deleted successfully!!'));
+    } catch (error: any) {
+      console.log(error);
+      return res
+        .status(HttpStatus.BAD_REQUEST)
+        .json(ApiResponseDTO.setResponse('ERROR', error['message']));
+    }
+  }
   @Post('submitRegistrarDetails/:id')
   @UsePipes(ValidationPipe)
   async submitRegistrarDetails(

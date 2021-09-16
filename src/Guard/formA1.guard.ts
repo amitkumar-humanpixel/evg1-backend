@@ -17,7 +17,7 @@ export class FormA1Guard implements CanActivate {
     private userService: UserService,
     @Inject(forwardRef(() => AccreditionService))
     private AccreditionService: AccreditionService,
-  ) {}
+  ) { }
 
   canActivate(
     context: ExecutionContext,

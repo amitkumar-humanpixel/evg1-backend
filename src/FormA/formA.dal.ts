@@ -168,6 +168,13 @@ export class FormADAL {
     await this.formAModel.updateOne({ _id: id }, formA);
   }
 
+  async deleteSupervisor(accreditionId: ObjectId, userId: number) {
+    await this.formAModel.findOneAndUpdate(
+      { accreditionId: accreditionId },
+      { $pull: { supervisorDetails: { userId: userId } } },
+    );
+  }
+
   async deleteFileUpload(id: ObjectId, path: string) {
     const pathData = path.split('/');
     const fileData = await this.formAModel.findOne({ accreditionId: id });

@@ -3,6 +3,7 @@ import {
   CanActivate,
   ExecutionContext,
   OnModuleInit,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import * as OktaJwtVerifier from '@okta/jwt-verifier';
@@ -33,7 +34,7 @@ export class OktaGuard implements CanActivate, OnModuleInit {
         })
         .catch((error) => {
           console.log(error);
-          return false;
+          throw new UnauthorizedException('Token expired!!');
         });
     }
     return false;

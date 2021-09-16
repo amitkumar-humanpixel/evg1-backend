@@ -163,27 +163,20 @@ export class AccreditionService {
             obj = new AccreditionSideBarDTO();
             if (accredition.formA1.some((x) => x.isComplete === false)) {
               obj.addDetails('Form A1', false);
-              obj.isEditable = user.role
-                .toLowerCase()
-                .includes('principal_supervisor')
-                ? true
-                : isEditable;
+              obj.isEditable = isEditable;
             } else {
               obj.addDetails('Form A1', true);
-              obj.isEditable = user.role
-                .toLowerCase()
-                .includes('principal_supervisor')
-                ? true
-                : isEditable;
+              obj.isEditable = isEditable;
             }
           }
+
           const element = accredition.formA1[i];
           const form = new SideBarDataDTO(
             element.stepName,
             element.isComplete,
-            element.stepName.toLowerCase().includes('final')
+            element.userId == user.userId
               ? true
-              : user.role.toLowerCase().includes('principal_supervisor')
+              : element.stepName.toLowerCase().includes('final')
                 ? true
                 : false,
             element.userId,
@@ -248,8 +241,8 @@ export class AccreditionService {
     // for (let index = 0; index < data.length; index++) {
     //   const element = data[index];
     const response = new AccreditionDetails();
-    response.accreditionId = data._id;
-    response.facilityId = data.facilityId as number;
+    // response.accreditionId = data._id;
+    // response.facilityId = data.facilityId as number;
     response.userId = userId;
     return response;
     //   arrResponse.push(response);
@@ -446,7 +439,7 @@ export class AccreditionService {
       accredition.formA1.unshift(
         new formClass(
           `${user.firstName} ${user.lastName}`,
-          false,
+          element.status,
           element.userId.toString(),
         ),
       );

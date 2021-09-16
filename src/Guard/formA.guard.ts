@@ -16,7 +16,7 @@ export class FormAGuard implements CanActivate {
     private userService: UserService,
     @Inject(forwardRef(() => AccreditionService))
     private AccreditionService: AccreditionService,
-  ) {}
+  ) { }
 
   canActivate(
     context: ExecutionContext,
@@ -27,29 +27,40 @@ export class FormAGuard implements CanActivate {
         .getUserAndFacilityDetails(userId as number)
         .then((userDetails) => {
           if (userDetails[0] && userDetails[0].role) {
-            return this.AccreditionService.checkUserWithUserId(userId as number)
-              .then((userData) => {
-                if (userData) {
-                  if (
-                    userDetails[0].role.toLowerCase() === 'practice_manager' ||
-                    userDetails[0].role.toLowerCase() === 'super_admin' ||
-                    userDetails[0].role.toLowerCase() ===
+            if (
+              userDetails[0].role.toLowerCase() ===
+              'accreditation_support_coordinator' ||
+              userDetails[0].role.toLowerCase() === 'super_admin'
+            ) {
+              return true;
+            } else {
+              return this.AccreditionService.checkUserWithUserId(
+                userId as number,
+              )
+                .then((userData) => {
+                  if (userData) {
+                    if (
+                      userDetails[0].role.toLowerCase() ===
+                      'practice_manager' ||
+                      userDetails[0].role.toLowerCase() === 'super_admin' ||
+                      userDetails[0].role.toLowerCase() ===
                       'principal_supervisor' ||
-                    userDetails[0].role.toLowerCase() ===
+                      userDetails[0].role.toLowerCase() ===
                       'accreditation_support_coordinator' ||
-                    userDetails[0].role.toLowerCase() === 'accreditor'
-                  ) {
-                    return true;
+                      userDetails[0].role.toLowerCase() === 'accreditor'
+                    ) {
+                      return true;
+                    } else {
+                      return false;
+                    }
                   } else {
                     return false;
                   }
-                } else {
+                })
+                .catch(() => {
                   return false;
-                }
-              })
-              .catch(() => {
-                return false;
-              });
+                });
+            }
           } else {
             return false;
           }

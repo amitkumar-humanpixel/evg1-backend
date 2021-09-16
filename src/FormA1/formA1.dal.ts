@@ -36,6 +36,13 @@ export class FormA1DAL {
     return await this.formA1Model.findOne({ accreditionId: accreditionId });
   }
 
+  async deleteSupervisor(accreditionId: ObjectId, userId: number) {
+    await this.formA1Model.findOneAndUpdate(
+      { accreditionId: accreditionId },
+      { $pull: { supervisorDetails: { userId: userId } } },
+    );
+  }
+
   async updateFormA1(id: ObjectId, formA1: IFormA1) {
     await this.formA1Model.updateOne({ _id: id }, formA1);
   }

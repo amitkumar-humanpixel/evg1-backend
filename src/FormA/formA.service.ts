@@ -29,6 +29,7 @@ import {
 import { mailSender } from 'src/Listeners/mail.listener';
 import { UserService } from 'src/User/user.service';
 import { FacilityService } from 'src/Facility/facility.service';
+import e from 'express';
 @Injectable()
 export class FormAService {
   constructor(
@@ -42,7 +43,7 @@ export class FormAService {
     private facilityRegistrarService: FacilityRegistrarService,
     @Inject(forwardRef(() => UserService))
     private userService: UserService,
-  ) {}
+  ) { }
 
   async getPracticeManagers(
     facilityId: number,
@@ -110,9 +111,8 @@ export class FormAService {
     users.usualWorkingHours =
       practiceManagers?.practiceManagerDetail?.usualWorkingHours ?? {};
     users.hours = practiceManagers?.practiceManagerDetail?.hours ?? [];
-    users.name = `${practiceManagers?.user?.firstName ?? ''} ${
-      practiceManagers?.user?.lastName ?? ''
-    }`;
+    users.name = `${practiceManagers?.user?.firstName ?? ''} ${practiceManagers?.user?.lastName ?? ''
+      }`;
     users.email = `${practiceManagers?.user?.email ?? ''}`;
     return users;
   }
@@ -174,9 +174,8 @@ export class FormAService {
         const userData = registrarDetails[0].placement.find(
           (x) => x.placementId == element.placementId,
         );
-        registrar.name = `${userData?.firstName ?? ''} ${
-          userData?.lastName ?? ''
-        }`;
+        registrar.name = `${userData?.firstName ?? ''} ${userData?.lastName ?? ''
+          }`;
 
         arrRegistrar.push(registrar);
       }
@@ -245,6 +244,9 @@ export class FormAService {
     // }
 
     const objFormA = await this.formADAL.getFormAByAccreditionId(accreditionid);
+    const existingObjFormA1 = await this.formA1Service.getFormA1ByAccreditionId(
+      accreditionid,
+    );
     if (objFormA == null) {
       throw new BadRequestException(
         'Form A does not exists with give accredition id!',
@@ -263,19 +265,80 @@ export class FormAService {
       }
     });
 
-    objFormA.supervisorDetails = supervisorDetails;
+    const existingSupervisors = [];
+    const addSupervisors = [];
+
+    for (let index = 0; index < objFormA.supervisorDetails.length; index++) {
+      const element = objFormA.supervisorDetails[index];
+      const exists = supervisorDetails.find((x) => x.userId == element.userId);
+      console.log('GET ELEMNT', typeof element);
+      if (exists) {
+        element.categoryOfSupervisor = exists.categoryOfSupervisor;
+        element.status = true;
+        element.contactNumber = exists.contactNumber;
+        element.userId = exists.userId;
+        element.isNotify = exists.isNotify;
+        existingSupervisors.push(element);
+        console.log('Element', element);
+      }
+    }
+
+    for (let index = 0; index < supervisorDetails.length; index++) {
+      const element = supervisorDetails[index];
+      const newUser = existingSupervisors.find(
+        (x) => x.userId == element.userId,
+      );
+      if (!newUser) {
+        addSupervisors.push(element);
+      }
+    }
+
+    // if (existingSupervisors.length > 0) {
+    //  ;
+    // }
+    // if (addSupervisors.length > 0) {
+    //   objFormA.supervisorDetails = [];
+    // }
+    objFormA.supervisorDetails = [...existingSupervisors, ...addSupervisors];
     await this.formADAL.updateFormA(objFormA._id, objFormA);
 
     const formA1 = await this.formA1Service.getFormA1ByAccreditionId(
       objFormA.accreditionId as ObjectId,
     );
-
+    //let removeFromExisting = [];
     const objFormA1 = new FormA1DTO();
     for (let index = 0; index < objFormA.supervisorDetails.length; index++) {
       const element = objFormA.supervisorDetails[index];
-      objFormA1.addSupervisorsDetails(element);
-    }
+      if (existingObjFormA1 == null) {
+        objFormA1.addSupervisorsDetails(element);
+      } else {
+        // removeFromExisting = existingObjFormA1.supervisorDetails.filter(
+        //   (x) => x.userId !== element.userId,
+        // );
 
+        // for (let j = 0; j < existingObjFormA1.supervisorDetails.length; j++) {
+        //   const existingData = existingObjFormA1.supervisorDetails[j];
+        //   if (existingData.userId !== element.userId) {
+        //     if (
+        //       removeFromExisting.find((x) => {
+        //         x.userId === element.userId;
+        //       }) === undefined
+        //     ) {
+        //       removeFromExisting.push(existingData);
+        //     }
+        //   }
+        // }
+        // console.log('existing ', existingObjFormA1.supervisorDetails);
+        // const check = existingObjFormA1.supervisorDetails.find(
+        //   (x) => x.userId === element.userId,
+        // );
+        // console.log('check : ', check);
+        // if (!check) {
+
+        // }
+      }
+    }
+    //console.log('remove : ', removeFromExisting);
     if (formA1 == null) {
       objFormA1.addFormA1(objFormA.accreditionId as ObjectId, objFormA._id);
 
@@ -291,12 +354,20 @@ export class FormAService {
         [...supervisorDetails],
       );
     } else {
-      formA1.supervisorDetails = objFormA1.supervisorDetails;
+      const formA1SupervisorDetails = formA1.supervisorDetails;
+
+      // for (let index = 0; index < removeFromExisting.length; index++) {
+      //   const element = removeFromExisting[index];
+      //   formA1SupervisorDetails = formA1SupervisorDetails.filter(
+      //     (x) => x.userId !== element.userId,
+      //   );
+      // }
+      formA1.supervisorDetails = formA1SupervisorDetails;
       await this.formA1Service.updateFormA1ByAccreditionId(formA1);
 
       await this.accreditionService.addSupervisors(
         objFormA.accreditionId as ObjectId,
-        [...supervisorDetails],
+        [...objFormA.supervisorDetails],
       );
     }
   }
@@ -335,9 +406,8 @@ export class FormAService {
         const link =
           process.env.BASE_URL +
           process.env.FORM_COMPLETE_PARTA +
-          `${nameUser?.firstName.toLowerCase() ?? ''}${
-            nameUser?.lastName.charAt(0).toUpperCase() +
-              nameUser?.lastName.slice(1) ?? ''
+          `${nameUser?.firstName.toLowerCase() ?? ''}${nameUser?.lastName.charAt(0).toUpperCase() +
+          nameUser?.lastName.slice(1) ?? ''
           }/` +
           `?id=${id}&sid=${userData.userId}`;
         mailSender(
@@ -357,37 +427,23 @@ export class FormAService {
       await this.formADAL.updateFormA(objFormA._id, objFormA);
     }
   }
+
+  async deleteSupervisorDetails(accreditionId: ObjectId, userId: number) {
+    const objFormA = await this.formADAL.getFormAByAccreditionId(accreditionId);
+    const objFormA1 = await this.formA1Service.getFormA1ByAccreditionId(
+      accreditionId,
+    );
+
+    if (objFormA !== null) {
+      await this.formADAL.deleteSupervisor(accreditionId, userId);
+    }
+
+    if (objFormA1 !== null) {
+      await this.formA1Service.deleteSupervisorDetails(accreditionId, userId);
+    }
+  }
+
   async deleteFileUpload(id: ObjectId, path: string) {
     this.formADAL.deleteFileUpload(id, path);
   }
 }
-
-// Mail Sending Function
-//1) return mail sent to PM to review and submit
-// const practiceManagerData =
-//   await this.formAService.getPracticeManagerFullData(accreditionId);
-// for (let i = 0; i < practiceManagerData.length; i++) {
-//   mailSender(
-//     practiceManagerData[i].user.email,
-//     practiceManagerData[i].user.firstName,
-//     practiceManagerData[i].user.lastName,
-//     practiceManagerData[i].facilityDetails.practiceName,
-//     'Form Requires Review',
-//     'link',
-//   );
-// }
-
-//2) success mail send to accreditor
-// const accreditorData = await this.formAService.getAccreditorFullData(
-//   accreditionId,
-// );
-// for (let i = 0; i < accreditorData.length; i++) {
-//   mailSender(
-//     accreditorData[i].user.email,
-//     accreditorData[i].user.firstName,
-//     accreditorData[i].user.lastName,
-//     accreditorData[i].facilityDetails.practiceName,
-//     'Form Ready',
-//     'link',
-//   );
-// }

@@ -28,7 +28,7 @@ export class FormA1Service {
     private readonly formBService: FormBService,
     private readonly userService: UserService,
     private readonly tempSupervisorDetail: SupervisorTempDetailService,
-  ) {}
+  ) { }
 
   async getSupervisors(
     id: ObjectId,
@@ -41,6 +41,10 @@ export class FormA1Service {
 
   async getFormA1ByAccreditionId(accreditionId: ObjectId) {
     return await this.formA1DAL.getFormA1ByAccreditionId(accreditionId);
+  }
+
+  async deleteSupervisorDetails(accreditionId: ObjectId, userId: number) {
+    await this.formA1DAL.deleteSupervisor(accreditionId, userId);
   }
 
   async addFormA1ByAccreditionId(formA1: FormA1DTO) {
