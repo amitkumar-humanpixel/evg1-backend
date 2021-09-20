@@ -4,6 +4,7 @@ import {
   ExecutionContext,
   Inject,
   forwardRef,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { UserService } from 'src/User/user.service';
@@ -16,7 +17,7 @@ export class AccreditionGuard implements CanActivate {
     private userService: UserService,
     @Inject(forwardRef(() => AccreditionService))
     private AccreditionService: AccreditionService,
-  ) {}
+  ) { }
 
   canActivate(
     context: ExecutionContext,
@@ -24,6 +25,9 @@ export class AccreditionGuard implements CanActivate {
     // console.log(context);
     if (context.getArgs()[0]?.headers?.userid) {
       const userId = parseInt(context.getArgs()[0]?.headers?.userid);
+      if (userId === NaN) {
+        throw new UnauthorizedException('Token expired!!');
+      }
       return this.userService
         .getUserAndFacilityDetails(userId as number)
         .then((userDetails) => {
@@ -35,9 +39,9 @@ export class AccreditionGuard implements CanActivate {
                     userDetails[0].role.toLowerCase() === 'practice_manager' ||
                     userDetails[0].role.toLowerCase() === 'super_admin' ||
                     userDetails[0].role.toLowerCase() ===
-                      'principal_supervisor' ||
+                    'principal_supervisor' ||
                     userDetails[0].role.toLowerCase() ===
-                      'accreditation_support_coordinator' ||
+                    'accreditation_support_coordinator' ||
                     userDetails[0].role.toLowerCase() === 'accreditor'
                   ) {
                     return true;

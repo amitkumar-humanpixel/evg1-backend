@@ -47,6 +47,10 @@ export class AccreditionService {
     return response[0];
   }
 
+  async getAccreditionByAccreditionId(accreditionId: ObjectId) {
+    return await this.accreditionDAL.getAccreditionById(accreditionId);
+  }
+
   async createAccreditionByFacility(
     facility: IFacility,
     practiceManagerIds: number[],
@@ -146,7 +150,7 @@ export class AccreditionService {
           isAdd[0].userId,
         );
         obj = new AccreditionSideBarDTO();
-        obj.addDetails('Form A1', false);
+        obj.addDetails('Form A1', isAdd[0]?.isComplete ?? false);
         obj.isEditable = isEditable;
         obj.addSubSteps(form);
         arrSideBar.push(obj);
@@ -334,22 +338,20 @@ export class AccreditionService {
     const obj = new supervisorDataDTO();
     obj.paginatedResult = [];
     obj.totalCount = [];
-
     for (let index = 0; index < data.length; index++) {
       const element = data[index];
       for (let j = 0; j < element.paginatedResult.length; j++) {
-        const data = element.paginatedResult[j];
-        const filtered = data.formA1.filter(
+        const pagedData = element.paginatedResult[j];
+        const filtered = pagedData.formA1.filter(
           (x) => x.userId === userId && x.isComplete == status,
         );
         if (filtered.length > 0) {
-          obj.paginatedResult.push(data);
+          obj.paginatedResult.push(pagedData);
           //obj.totalCount(...element.totalCount);
-        } else {
-          return [obj];
         }
       }
     }
+    obj.totalCount.push({ count: obj.paginatedResult.length });
     return [obj];
   }
 

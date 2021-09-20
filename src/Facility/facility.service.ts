@@ -257,8 +257,9 @@ export class FacilityService {
       processed: 0,
       ErrorDataCount: 0,
     };
-    // console.log('output', output)
     output = JSON.parse(JSON.stringify(output));
+    // console.log('output', output);
+    // console.log(output.length);
     for (let index = 0; index < output.length; index++) {
       const element = output[index];
       if (element.StartDate.trim() === '' && element.DueDate.trim() === '') {

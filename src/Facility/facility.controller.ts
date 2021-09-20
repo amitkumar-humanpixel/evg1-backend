@@ -35,7 +35,7 @@ export class FacilityController {
   constructor(
     private readonly facilityService: FacilityService,
     private readonly csvParser: CSVParser,
-  ) {}
+  ) { }
 
   @Post()
   @UsePipes(new ValidationPipe({ transform: true }))

@@ -186,7 +186,7 @@ export class FormAController {
       await this.formAService.submitPracticeStandards(id, practiceStandards);
       return res
         .status(HttpStatus.OK)
-        .json(ApiResponseDTO.setResponse('SUCCESS', 'Update successfully!!'));
+        .json(ApiResponseDTO.setResponse('SUCCESS', 'Updated Successfully.'));
     } catch (error: any) {
       console.log(error);
       return res
@@ -231,7 +231,7 @@ export class FormAController {
       await this.formAService.submitSupervisors(id, supervisors);
       return res
         .status(HttpStatus.OK)
-        .json(ApiResponseDTO.setResponse('SUCCESS', 'Update successfully!!'));
+        .json(ApiResponseDTO.setResponse('SUCCESS', 'Updated Successfully.'));
     } catch (error: any) {
       console.log(error);
       console.log(error);
@@ -295,7 +295,7 @@ export class FormAController {
       await this.formAService.submitRegistrarDetails(id, registrars);
       return res
         .status(HttpStatus.OK)
-        .json(ApiResponseDTO.setResponse('SUCCESS', 'Update successfully!!'));
+        .json(ApiResponseDTO.setResponse('SUCCESS', 'Updated Successfully.'));
     } catch (error: any) {
       console.log(error);
       return res

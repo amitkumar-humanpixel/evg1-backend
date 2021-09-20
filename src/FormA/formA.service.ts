@@ -12,7 +12,7 @@ import {
   GetFacilityStaffUser,
   GetRegistrarUser,
 } from 'src/FacilityStaff/facilityStaff.dto';
-import { FormA1DTO } from 'src/FormA1/formA1.dto';
+import { FormA1DTO, SupervisorDetailsDTOA1 } from 'src/FormA1/formA1.dto';
 import { FormA1Service } from 'src/FormA1/formA1.service';
 import { FormADAL } from './formA.dal';
 import {
@@ -30,6 +30,7 @@ import { mailSender } from 'src/Listeners/mail.listener';
 import { UserService } from 'src/User/user.service';
 import { FacilityService } from 'src/Facility/facility.service';
 import e from 'express';
+import { SupervisorTempDetailService } from 'src/SupervisorTempDetails/supervisorTempDetails.service';
 @Injectable()
 export class FormAService {
   constructor(
@@ -43,6 +44,7 @@ export class FormAService {
     private facilityRegistrarService: FacilityRegistrarService,
     @Inject(forwardRef(() => UserService))
     private userService: UserService,
+    private readonly tempSupervisorDetail: SupervisorTempDetailService,
   ) { }
 
   async getPracticeManagers(
@@ -214,6 +216,10 @@ export class FormAService {
     } else {
       existingFormA.practiceManagerDetail = objPracticeManager;
       await this.formADAL.updateFormA(existingFormA._id, existingFormA);
+      await this.accreditionService.completeFormASteps(
+        existingFormA.accreditionId as ObjectId,
+        'Practice Manager',
+      );
       return existingFormA._id as unknown as string;
     }
   }
@@ -242,6 +248,10 @@ export class FormAService {
     //     updatedSupervisorDetails.push(element);
     //   }
     // }
+
+    if (supervisorDetails.length === 0) {
+      throw new BadRequestException('Please enter at least one supervisor');
+    }
 
     const objFormA = await this.formADAL.getFormAByAccreditionId(accreditionid);
     const existingObjFormA1 = await this.formA1Service.getFormA1ByAccreditionId(
@@ -272,9 +282,21 @@ export class FormAService {
       const element = objFormA.supervisorDetails[index];
       const exists = supervisorDetails.find((x) => x.userId == element.userId);
       console.log('GET ELEMNT', typeof element);
+      let status = false;
+      if (existingObjFormA1) {
+        console.log('existing', existingObjFormA1);
+        console.log('element', element.userId);
+        const existingingData = existingObjFormA1.supervisorDetails.find(
+          (x) => x.userId === element.userId,
+        );
+        console.log('data', existingingData);
+        if (existingingData) {
+          status = existingingData.standardsDetail.length > 0 ? true : false;
+        }
+      }
       if (exists) {
         element.categoryOfSupervisor = exists.categoryOfSupervisor;
-        element.status = true;
+        element.status = status;
         element.contactNumber = exists.contactNumber;
         element.userId = exists.userId;
         element.isNotify = exists.isNotify;
@@ -309,9 +331,24 @@ export class FormAService {
     const objFormA1 = new FormA1DTO();
     for (let index = 0; index < objFormA.supervisorDetails.length; index++) {
       const element = objFormA.supervisorDetails[index];
-      if (existingObjFormA1 == null) {
+      if (existingObjFormA1 === null) {
         objFormA1.addSupervisorsDetails(element);
       } else {
+        if (formA1 != null) {
+          const existing = formA1.supervisorDetails.find(
+            (x) => x.userId === element.userId,
+          );
+          if (existing === undefined) {
+            const objSupervisorDetails = new SupervisorDetailsDTOA1();
+            objSupervisorDetails.userId = element.userId;
+            objSupervisorDetails.contactNumber = element.contactNumber;
+            objSupervisorDetails.categoryOfSupervisor =
+              element.categoryOfSupervisor;
+            objSupervisorDetails.isFormA1Complete = element.isFormA1Complete;
+
+            formA1.supervisorDetails.push(objSupervisorDetails);
+          }
+        }
         // removeFromExisting = existingObjFormA1.supervisorDetails.filter(
         //   (x) => x.userId !== element.userId,
         // );
@@ -344,11 +381,6 @@ export class FormAService {
 
       await this.formA1Service.addFormA1ByAccreditionId(objFormA1);
 
-      await this.accreditionService.completeFormASteps(
-        objFormA.accreditionId as ObjectId,
-        'Supervisor',
-      );
-
       await this.accreditionService.addSupervisors(
         objFormA.accreditionId as ObjectId,
         [...supervisorDetails],
@@ -370,6 +402,11 @@ export class FormAService {
         [...objFormA.supervisorDetails],
       );
     }
+
+    await this.accreditionService.completeFormASteps(
+      objFormA.accreditionId as ObjectId,
+      'Supervisor',
+    );
   }
 
   async submitRegistrarDetails(
@@ -429,6 +466,19 @@ export class FormAService {
   }
 
   async deleteSupervisorDetails(accreditionId: ObjectId, userId: number) {
+    const accredition =
+      await this.accreditionService.getAccreditionByAccreditionId(
+        accreditionId,
+      );
+
+    console.log(accredition);
+
+    if (accredition.isFormA1Complete) {
+      throw new BadRequestException(
+        'FORM A1 is already completed you are not allowed to perform this action.',
+      );
+    }
+
     const objFormA = await this.formADAL.getFormAByAccreditionId(accreditionId);
     const objFormA1 = await this.formA1Service.getFormA1ByAccreditionId(
       accreditionId,
@@ -439,6 +489,17 @@ export class FormAService {
     }
 
     if (objFormA1 !== null) {
+      const tempDetails =
+        await this.tempSupervisorDetail.getSupervisorTempDetailsByAccreditionId(
+          accreditionId,
+          userId,
+        );
+      if (tempDetails.length > 0) {
+        this.tempSupervisorDetail.deleteSupervisorDetail(
+          accreditionId,
+          userId as number,
+        );
+      }
       await this.formA1Service.deleteSupervisorDetails(accreditionId, userId);
     }
   }

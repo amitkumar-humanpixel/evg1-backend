@@ -10,6 +10,7 @@ import { FormADAL } from './formA.dal';
 import { FormASchema } from './formA.entity';
 import { FormAService } from './formA.service';
 import { UserModule } from 'src/User/user.module';
+import { SupervisorTempDetailModule } from 'src/SupervisorTempDetails/supervisorTempDetails.module';
 @Module({
   imports: [
     MongooseModule.forFeature([{ name: 'formA', schema: FormASchema }]),
@@ -20,9 +21,10 @@ import { UserModule } from 'src/User/user.module';
     forwardRef(() => FormA1Module),
     forwardRef(() => FacilityRegistrarModule),
     forwardRef(() => UserModule),
+    forwardRef(() => SupervisorTempDetailModule),
   ],
   controllers: [FormAController],
   providers: [FormAService, FormADAL, FacilityStaffDAL],
   exports: [FormAService],
 })
-export class FormAModule {}
+export class FormAModule { }

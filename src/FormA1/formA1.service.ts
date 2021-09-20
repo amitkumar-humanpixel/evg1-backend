@@ -66,6 +66,25 @@ export class FormA1Service {
     const objFormA1 = await this.formA1DAL.getFormA1ByAccreditionId(
       accreditionId,
     );
+
+    // due to bug is generated this code is added.
+    if (objFormA1.supervisorDetails.length > 0) {
+      const existingSupervisor = objFormA1.supervisorDetails.find(
+        (x) => x.userId === supervisor.userId,
+      );
+
+      if (existingSupervisor === undefined) {
+        const objSupervisorDetails = new SupervisorDetailsDTOA1();
+        objSupervisorDetails.userId = supervisor.userId;
+        objSupervisorDetails.contactNumber = supervisor.contactNumber;
+        objSupervisorDetails.categoryOfSupervisor =
+          supervisor.categoryOfSupervisor;
+        objSupervisorDetails.isFormA1Complete = supervisor.isFormA1Complete;
+
+        objFormA1.supervisorDetails.push(objSupervisorDetails);
+      }
+    }
+
     for (let index = 0; index < objFormA1.supervisorDetails.length; index++) {
       if (objFormA1.supervisorDetails[index].userId == supervisor.userId) {
         objFormA1.supervisorDetails[index].contactNumber =

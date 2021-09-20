@@ -5,6 +5,7 @@ import {
   Inject,
   forwardRef,
   BadRequestException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { UserService } from 'src/User/user.service';
@@ -14,13 +15,16 @@ export class UserGuard implements CanActivate {
   constructor(
     @Inject(forwardRef(() => UserService))
     private userService: UserService,
-  ) {}
+  ) { }
 
   canActivate(
     context: ExecutionContext,
   ): boolean | Promise<boolean> | Observable<boolean> {
     if (context.getArgs()[0]?.headers?.userid) {
       const userId = parseInt(context.getArgs()[0]?.headers?.userid);
+      if (userId === NaN) {
+        throw new UnauthorizedException('Token expired!!');
+      }
       return this.userService.getUserByUserId(userId).then((userDetails) => {
         if (!userDetails.role.toLowerCase().includes('admin')) {
           throw new BadRequestException(

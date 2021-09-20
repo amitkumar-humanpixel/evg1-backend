@@ -16,7 +16,7 @@ export class SupervisorRegistrationFormGuard implements CanActivate {
     private userService: UserService,
     @Inject(forwardRef(() => AccreditionService))
     private AccreditionService: AccreditionService,
-  ) {}
+  ) { }
 
   canActivate(
     context: ExecutionContext,
@@ -32,7 +32,7 @@ export class SupervisorRegistrationFormGuard implements CanActivate {
               userDetails[0].role.toLowerCase() === 'super_admin' ||
               userDetails[0].role.toLowerCase() === 'principal_supervisor' ||
               userDetails[0].role.toLowerCase() ===
-                'accreditation_support_coordinator'
+              'accreditation_support_coordinator'
             ) {
               return true;
             } else {

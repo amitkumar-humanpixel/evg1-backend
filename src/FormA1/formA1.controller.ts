@@ -131,7 +131,7 @@ export class FormA1Controller {
       await this.formA1Service.submitSupervisorDetail(id, supervisor);
       return res
         .status(HttpStatus.OK)
-        .json(ApiResponseDTO.setResponse('SUCCESS', 'Update successfully!'));
+        .json(ApiResponseDTO.setResponse('SUCCESS', 'Updated Successfully.'));
     } catch (error: any) {
       console.log(error);
       return res
@@ -150,7 +150,7 @@ export class FormA1Controller {
       await this.formA1Service.submitTempSupervisorDetail(id, supervisor);
       return res
         .status(HttpStatus.OK)
-        .json(ApiResponseDTO.setResponse('SUCCESS', 'Update successfully!'));
+        .json(ApiResponseDTO.setResponse('SUCCESS', 'Updated Successfully.'));
     } catch (error: any) {
       console.log(error);
       return res
@@ -173,7 +173,7 @@ export class FormA1Controller {
       );
       return res
         .status(HttpStatus.OK)
-        .json(ApiResponseDTO.setResponse('SUCCESS', 'Update successfully!'));
+        .json(ApiResponseDTO.setResponse('SUCCESS', 'Updated Successfully.'));
     } catch (error: any) {
       console.log(error);
       return res
@@ -189,7 +189,7 @@ export class FormA1Controller {
       await this.formA1Service.resubmitForm(id);
       return res
         .status(HttpStatus.OK)
-        .json(ApiResponseDTO.setResponse('SUCCESS', 'Update successfully!'));
+        .json(ApiResponseDTO.setResponse('SUCCESS', 'Updated Successfully.'));
     } catch (error: any) {
       console.log(error);
       return res

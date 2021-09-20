@@ -4,6 +4,7 @@ import {
   ExecutionContext,
   Inject,
   forwardRef,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { UserService } from 'src/User/user.service';
@@ -23,6 +24,9 @@ export class FormAGuard implements CanActivate {
   ): boolean | Promise<boolean> | Observable<boolean> {
     if (context.getArgs()[0]?.headers?.userid) {
       const userId = parseInt(context.getArgs()[0]?.headers?.userid);
+      if (userId === NaN) {
+        throw new UnauthorizedException('Token expired!!');
+      }
       return this.userService
         .getUserAndFacilityDetails(userId as number)
         .then((userDetails) => {

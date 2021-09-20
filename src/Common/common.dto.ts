@@ -22,7 +22,7 @@ export class ApiResponseDTO {
   data: any;
 
   // eslint-disable-next-line @typescript-eslint/no-empty-function
-  private constructor() {}
+  private constructor() { }
 
   private static getInstance(): ApiResponseDTO {
     if (!ApiResponseDTO.instance) {
@@ -36,6 +36,7 @@ export class ApiResponseDTO {
     const response = ApiResponseDTO.getInstance();
     if (typeof data === 'string') {
       response.message = data;
+      response.data = undefined;
     } else {
       response.data = data;
     }

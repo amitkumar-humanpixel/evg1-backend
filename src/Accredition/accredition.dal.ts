@@ -13,7 +13,7 @@ export class AccreditionDAL {
   constructor(
     @InjectModel('accredition')
     private readonly accreditionModel: Model<IAccredition>,
-  ) {}
+  ) { }
 
   async createAccredition(
     accredition: CreateAccreditionDTO,

@@ -38,7 +38,7 @@ export class FileUploadController {
       status: 'SUCCESS',
       fileUrl: `${process.env.BASE_URL}${file.filename}`,
       filename: file.filename,
-      message: 'Successfully upload.',
+      message: 'Successfully Uploaded.',
     };
     return res.status(HttpStatus.OK).json(response);
   }

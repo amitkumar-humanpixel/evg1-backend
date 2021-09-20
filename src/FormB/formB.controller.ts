@@ -30,7 +30,7 @@ import { OktaGuard } from 'src/Guard/okta.guard';
 @UseGuards(FormBGuard)
 @UseGuards(OktaGuard)
 export class FormBController {
-  constructor(private readonly formBService: FormBService) {}
+  constructor(private readonly formBService: FormBService) { }
 
   @Get('supervisors/:id')
   async getSupervisors(
@@ -140,7 +140,7 @@ export class FormBController {
       );
       return res
         .status(HttpStatus.OK)
-        .json(ApiResponseDTO.setResponse('SUCCESS', 'Update successfully!'));
+        .json(ApiResponseDTO.setResponse('SUCCESS', 'Updated Successfully.'));
     } catch (error: any) {
       console.log(error);
       return res
@@ -159,7 +159,7 @@ export class FormBController {
       await this.formBService.submitSummary(accreditionId, summary);
       return res
         .status(HttpStatus.OK)
-        .json(ApiResponseDTO.setResponse('SUCCESS', 'Update successfully!'));
+        .json(ApiResponseDTO.setResponse('SUCCESS', 'Updated Successfully.'));
     } catch (error: any) {
       console.log(error);
       return res
@@ -179,7 +179,7 @@ export class FormBController {
       await this.formBService.submitOtherDetails(accreditionId, otherDetails);
       return res
         .status(HttpStatus.OK)
-        .json(ApiResponseDTO.setResponse('SUCCESS', 'Update successfully!'));
+        .json(ApiResponseDTO.setResponse('SUCCESS', 'Updated Successfully.'));
     } catch (error: any) {
       console.log(error);
       return res
