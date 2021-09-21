@@ -31,7 +31,7 @@ export class FacilityService {
     @Inject(forwardRef(() => FacilityStaffService))
     private readonly facilityStaffService: FacilityStaffService,
     private readonly userService: UserService,
-  ) {}
+  ) { }
 
   async insertFacility(facility: FacilityDTO): Promise<IFacility> {
     return await this.facilityDAL.addFacility(facility);
@@ -139,9 +139,11 @@ export class FacilityService {
           );
         // use practice manager for sending mail.
         for (let index = 0; index < practiceManager.length; index++) {
-          const element = practiceManager[index];
+          const objPracticeManager = practiceManager[index];
           const practiceManagerData: any =
-            await this.userService.getUserAndFacilityDetails(element.userId);
+            await this.userService.getUserAndFacilityDetails(
+              objPracticeManager.userId,
+            );
           const link =
             process.env.BASE_URL +
             process.env.FORM_READY +
@@ -301,10 +303,8 @@ export class FacilityService {
         validationObject.processed++;
       } else {
         validationObject.ErrorData.push(
-          `Facility Id : ${newFacility.facilityId} its ${
-            responseData?.key ?? ''
-          } data is not proper, its data is ${
-            responseData?.value ?? ''
+          `Facility Id : ${newFacility.facilityId} its ${responseData?.key ?? ''
+          } data is not proper, its data is ${responseData?.value ?? ''
           }, due to that it is not processed.`,
         );
         validationObject.ErrorDataCount++;

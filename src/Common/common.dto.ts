@@ -39,6 +39,7 @@ export class ApiResponseDTO {
       response.data = undefined;
     } else {
       response.data = data;
+      response.message = undefined;
     }
     response.status = status;
     return response;

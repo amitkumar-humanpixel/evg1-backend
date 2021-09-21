@@ -171,6 +171,8 @@ export class FormAService {
         registrar.hoursDetails = element.hoursDetails;
         registrar.onCall = element.onCall;
         registrar.note = element.note;
+        registrar.note1 = element.note1;
+        registrar.note2 = element.note2;
         registrar.placementId = element.placementId;
 
         const userData = registrarDetails[0].placement.find(

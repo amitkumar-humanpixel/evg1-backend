@@ -21,7 +21,7 @@ export class FacilityGuard implements CanActivate {
   ): boolean | Promise<boolean> | Observable<boolean> {
     if (context.getArgs()[0]?.headers?.userid) {
       const userId = parseInt(context.getArgs()[0]?.headers?.userid);
-      if (userId === NaN) {
+      if (userId === undefined) {
         throw new UnauthorizedException('Token expired!!');
       }
       return this.userService
