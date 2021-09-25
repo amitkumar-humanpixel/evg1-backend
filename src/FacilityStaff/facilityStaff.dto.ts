@@ -66,6 +66,7 @@ export class GetFacilityStaffUser {
   firstName: string;
   lastName: string;
   role: string;
+  contactNumber: string;
 }
 
 export class GetRegistrarUser {

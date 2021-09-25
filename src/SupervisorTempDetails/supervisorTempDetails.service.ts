@@ -13,7 +13,7 @@ export class SupervisorTempDetailService {
     private accreditionService: AccreditionService,
     @Inject(forwardRef(() => UserService))
     private userService: UserService,
-  ) {}
+  ) { }
 
   async submitSupervisorDetail(
     accreditionId: ObjectId,
@@ -40,7 +40,7 @@ export class SupervisorTempDetailService {
         existingSupervisor[0].supervisorDetails.standardsDetail =
           supervisor.standardsDetail;
         existingSupervisor[0].supervisorDetails.isFormA1Complete = true;
-
+        existingSupervisor[0].supervisorDetails.isAgree = supervisor.isAgree;
         await this.supervisorTempDetailDAL.updateSupervisorTempDetails(
           existingSupervisor[0]._id,
           existingSupervisor[0],

@@ -6,6 +6,7 @@ export function mailTemplateForSupervisorRegistor(
   email: string,
   firstName: string,
   lastName: string,
+  practiceName: string,
 ) {
   const template = `<!DOCTYPE html>
     <html lang="en">
@@ -32,7 +33,8 @@ export function mailTemplateForSupervisorRegistor(
                 ${senderFirstName} ${senderLastName}. Please find the following details:<br><br>
                 First Name : ${firstName}<br>
                 Last Name : ${lastName}<br>
-                Email : ${email}
+                Email : ${email}<br>
+                Practice Name : ${practiceName}
               </td>
             </tr>
           </table>

@@ -24,8 +24,8 @@ export class SummaryDTO {
   @Type(() => applicationsDTO)
   @ValidateNested({ each: true })
   applications: applicationsDTO[];
-  @IsNotEmpty({ message: 'Shady Oaks Practice should not be empty' })
-  shadyOaksPractice: string;
+  @IsNotEmpty({ message: 'Practice details should not be empty' })
+  practiceDetail: string;
 }
 
 export class OtherDetailsDTO {
@@ -37,6 +37,7 @@ export class OtherDetailsDTO {
   recomendationPanel: string;
   @IsNotEmpty({ message: 'Reviewed By should not be empty' })
   reviewedBy: string;
+  isAgree: boolean;
 }
 export class FormBDTO {
   accreditionId: ObjectId | IAccredition;
@@ -86,16 +87,16 @@ export class TimeDTO {
 export class assessmentDTO {
   @IsNotEmpty({ message: 'Assessment title should not be empty' })
   title: string;
-  status: boolean;
+  status: string;
 }
 
 export class applicationsDTO {
   @IsNotEmpty({ message: 'Supervisor Id should not be empty' })
   supervisorId: number | IUser;
   isFormRegistrar: boolean;
-  RACGP: boolean;
-  ACRRM: boolean;
-  consideration: boolean;
+  RACGP: string;
+  ACRRM: string;
+  consideration: string;
   remarks: string;
 }
 
@@ -112,7 +113,7 @@ export class SummaryDataDTO {
   classification: string;
   dateOfVisit: Date;
   dateOfReportComplete: Date;
-  shadyOaksPractice: string;
+  practiceDetail: string;
 }
 
 export class accreditorDetails {

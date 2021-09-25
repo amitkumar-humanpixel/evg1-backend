@@ -3,15 +3,15 @@ import {
   Get,
   Post,
   UseInterceptors,
-  UploadedFile,
   HttpStatus,
   Res,
   Param,
   UseFilters,
   Delete,
   Body,
+  UploadedFiles,
 } from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { FilesInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { HttpExceptionFilter } from 'src/Filter/exception.filter';
 import { editFileName, FileFilter } from '../Utils/file-upload.utils';
@@ -25,22 +25,35 @@ export class FileUploadController {
   constructor(private readonly FileServise: FileServise) { }
   @Post('file')
   @UseInterceptors(
-    FileInterceptor('file', {
+    FilesInterceptor('file', 20, {
       storage: diskStorage({
         destination: './Files',
         filename: editFileName,
       }),
       fileFilter: FileFilter,
+      limits: {
+        fileSize: 10485760,
+      },
     }),
   )
-  async uploadedFile(@Res() res, @UploadedFile() file) {
-    const response = {
+  async uploadedFile(@Res() res, @UploadedFiles() files) {
+    const arrResponse = [];
+
+    files.forEach((file) => {
+      const response = {
+        fileUrl: `${process.env.BASE_URL}${file.filename}`,
+        fileName: file.filename,
+      };
+      arrResponse.push(response);
+    });
+
+    const fileResponse = {
       status: 'SUCCESS',
-      fileUrl: `${process.env.BASE_URL}${file.filename}`,
-      filename: file.filename,
+      data: arrResponse,
       message: 'Successfully Uploaded.',
     };
-    return res.status(HttpStatus.OK).json(response);
+
+    return res.status(HttpStatus.OK).json(fileResponse);
   }
 
   @Get(':imgpath')

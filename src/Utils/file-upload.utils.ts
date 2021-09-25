@@ -11,6 +11,15 @@ export const FileFilter = (req, file, callback) => {
     );
   }
 
+  const allFileSize = req?.headers['content-length'] ?? 0;
+  console.log(allFileSize);
+  if (parseInt(allFileSize) > 10485760) {
+    return callback(
+      new BadRequestException('Allow only upto 10MB files!'),
+      false,
+    );
+  }
+
   callback(null, true);
 };
 

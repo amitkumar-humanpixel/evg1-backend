@@ -21,7 +21,7 @@ export interface IFormB extends Document {
   dateOfReportComplete: Date;
   assessment: assessmentDTO[];
   applications: applicationsDTO[];
-  shadyOaksPractice: string;
+  practiceDetail: string;
   responseRecommendations: string;
   issueFoundDuringAssesmentOfPaperworkd: string;
 
@@ -29,4 +29,5 @@ export interface IFormB extends Document {
   recomendationPanel: string;
   previousIssues: string;
   reviewedBy: string;
+  isAgree: boolean;
 }

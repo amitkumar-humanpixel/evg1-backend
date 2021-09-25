@@ -20,6 +20,8 @@ export const AccreditionSchema = new mongoose.Schema(
     isFormA1Complete: { type: Boolean, default: false },
     isFormBComplete: { type: Boolean, default: false },
     isPostDetailsComplete: { type: Boolean, default: false },
+    isReaccreditationChecklistComplete: { type: Boolean, default: false },
+    isAddressRecommendation: { type: Boolean, default: false },
     isDeleted: { type: Boolean, default: false },
     formA: [
       {
@@ -43,6 +45,12 @@ export const AccreditionSchema = new mongoose.Schema(
       default: 'INCOMPLETE',
     },
     users: [{ type: String }],
+    reaccreditationChecklist: [
+      {
+        title: { type: String },
+        status: { type: String },
+      },
+    ],
   },
   { timestamps: true },
 );

@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, ObjectId } from 'mongoose';
-import { SupervisorDetailsDTOA1 } from 'src/FormA1/formA1.dto';
 import { SupervisorTempDetailDTO } from './supervisorTempDetails.dto';
 import { ISupervisorTempDetails } from './supervisorTempDetails.interface';
 
@@ -10,7 +9,7 @@ export class SupervisorTempDetailDAL {
   constructor(
     @InjectModel('supervisorTempDetail')
     private readonly supervisorTempDetailModel: Model<ISupervisorTempDetails>,
-  ) {}
+  ) { }
 
   async addSupervisorTempDetails(
     supervisor: SupervisorTempDetailDTO,

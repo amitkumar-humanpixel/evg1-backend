@@ -44,6 +44,7 @@ export function mailSenderForSupervisorRegistration(
   email: string,
   firstName: string,
   lastName: string,
+  practiceName: string,
 ) {
   console.log(
     'reciverFirstName:: ' +
@@ -72,5 +73,6 @@ export function mailSenderForSupervisorRegistration(
     email,
     firstName,
     lastName,
+    practiceName,
   );
 }

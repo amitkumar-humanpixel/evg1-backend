@@ -35,6 +35,7 @@ export class SupervisorRegistrationFormController {
         supervisor.email,
         supervisor.firstName,
         supervisor.lastName,
+        supervisor.practiceName,
       );
       return res
         .status(HttpStatus.OK)

@@ -1,6 +1,7 @@
 import { Type } from 'class-transformer';
 import { IsNotEmpty, IsNumber, ValidateNested } from 'class-validator';
 import { ObjectId } from 'mongoose';
+import { college } from 'src/Accredition/accredition.dto';
 import { IAccredition } from 'src/Accredition/accredition.interface';
 import { IFacilityStaff } from 'src/FacilityStaff/facilityStaff.interface';
 import { IUser } from 'src/User/user.interface';
@@ -23,7 +24,7 @@ export class PracticeManagerDetails extends PracticeManagerDTO {
 }
 
 export class TimeDTO {
-  isChecked: boolean;
+  isChecked: string;
   @IsNotEmpty({ message: 'Days should not be empty' })
   days: string;
   @IsNotEmpty({ message: 'Hours should not be empty' })
@@ -37,7 +38,6 @@ export class TimeDTO {
 export class WorkingHoursDTO {
   @IsNotEmpty({ message: 'Days should not be empty' })
   days: string;
-  @IsNotEmpty({ message: 'Hours should not be empty' })
   hours: string;
 }
 
@@ -63,6 +63,10 @@ export class FormADTO {
   ) {
     this.accreditionId = accreditionId;
     this.practiceManagerDetail = practiceManagerDetail;
+  }
+
+  addNewFormA(accreditionId: ObjectId) {
+    this.accreditionId = accreditionId;
   }
 }
 
@@ -111,6 +115,8 @@ export class SupervisorDetailsDTO {
   isFormA1Complete: boolean;
   isNotify: boolean;
   status: boolean;
+  hours: Array<TimeDTO>;
+  college: Array<college>;
 }
 
 export class GetSupervisorDetails {
@@ -119,14 +125,21 @@ export class GetSupervisorDetails {
   email: string;
   contactNumber: string;
   categoryOfSupervisor: string;
+  college: Array<college>;
+  hours: Array<TimeDTO>;
 }
 export class PracticeStandardsDTO {
   @IsNotEmpty({ message: 'Practice Standards title should not be empty' })
   title: string;
   @IsNotEmpty({ message: 'Practice Standards status should not be empty' })
   status: string;
-  filePath: string;
+  filePath: Array<fileDetal>;
   remarks: string;
+}
+
+export class fileDetal {
+  fileUrl: string;
+  fileName: string;
 }
 
 export enum FormStatus {

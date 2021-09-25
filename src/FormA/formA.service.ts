@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConsoleLogger,
   forwardRef,
   Inject,
   Injectable,
@@ -28,8 +29,6 @@ import {
 } from './formA.dto';
 import { mailSender } from 'src/Listeners/mail.listener';
 import { UserService } from 'src/User/user.service';
-import { FacilityService } from 'src/Facility/facility.service';
-import e from 'express';
 import { SupervisorTempDetailService } from 'src/SupervisorTempDetails/supervisorTempDetails.service';
 @Injectable()
 export class FormAService {
@@ -47,6 +46,19 @@ export class FormAService {
     private readonly tempSupervisorDetail: SupervisorTempDetailService,
   ) { }
 
+  async addNewFormA(accreditionId: ObjectId) {
+    const existingFormA = await this.formADAL.getFormAByAccreditionId(
+      accreditionId,
+    );
+    if (existingFormA === null) {
+      const objFormA = new FormADTO();
+
+      objFormA.addNewFormA(accreditionId);
+
+      await this.formADAL.addFormA(objFormA);
+    }
+  }
+
   async getPracticeManagers(
     facilityId: number,
   ): Promise<GetFacilityStaffUser[]> {
@@ -54,6 +66,8 @@ export class FormAService {
       await this.facilityStaffDAL.getFacilityPracticeManagerByFacilityId(
         facilityId,
       );
+    const accredition =
+      await this.accreditionService.getAccreditionByFacilityId(facilityId);
     const users = new Array<GetFacilityStaffUser>();
     practiceMangers.map((practiceManger) => {
       const user = new GetFacilityStaffUser();
@@ -62,6 +76,7 @@ export class FormAService {
       user.email = practiceManger.user.email;
       user.role = practiceManger.user.role;
       user.userId = practiceManger.userId;
+      user.contactNumber = accredition?.phone ?? undefined;
       users.push(user);
     });
     return users;
@@ -70,6 +85,8 @@ export class FormAService {
   async getSupervisors(facilityId: number): Promise<GetFacilityStaffUser[]> {
     const supervisors =
       await this.facilityStaffDAL.getFacilitySupervisorByFacilityId(facilityId);
+    const accredition =
+      await this.accreditionService.getAccreditionByFacilityId(facilityId);
     const users = new Array<GetFacilityStaffUser>();
     supervisors.map((supervisor) => {
       const user = new GetFacilityStaffUser();
@@ -78,6 +95,7 @@ export class FormAService {
       user.email = supervisor.user.email;
       user.role = supervisor.user.role;
       user.userId = supervisor.userId;
+      user.contactNumber = accredition?.phone ?? undefined;
       users.push(user);
     });
 
@@ -134,13 +152,18 @@ export class FormAService {
   async getFormASupervisorsByAccreditionId(
     id: ObjectId,
   ): Promise<Array<GetSupervisorDetails>> {
-    console.log(id);
     const supervisors = await this.formADAL.getFormASupervisorsByAccreditionId(
       id,
     );
+    const formA1SupervisorDetails =
+      await this.formA1Service.getFormA1ByAccreditionId(id);
     const response = [];
     for (let index = 0; index < supervisors.length; index++) {
       const element = supervisors[index];
+      const supervisorDetails =
+        formA1SupervisorDetails?.supervisorDetails.find(
+          (x) => x.userId === element.user.userId,
+        ) ?? undefined;
       const supervisor = new GetSupervisorDetails();
       supervisor.userId = element.user.userId;
       supervisor.username = `${element.user.firstName} ${element.user.lastName}`;
@@ -148,6 +171,8 @@ export class FormAService {
       supervisor.contactNumber = element.supervisorDetails.contactNumber;
       supervisor.categoryOfSupervisor =
         element.supervisorDetails.categoryOfSupervisor;
+      supervisor.hours = supervisorDetails?.hours ?? undefined;
+      supervisor.college = element?.supervisorDetails?.college ?? [];
       response.push(supervisor);
     }
 
@@ -256,6 +281,9 @@ export class FormAService {
     }
 
     const objFormA = await this.formADAL.getFormAByAccreditionId(accreditionid);
+    if (objFormA === null) {
+      throw new BadRequestException('Please complete above steps first');
+    }
     const existingObjFormA1 = await this.formA1Service.getFormA1ByAccreditionId(
       accreditionid,
     );
@@ -283,15 +311,11 @@ export class FormAService {
     for (let index = 0; index < objFormA.supervisorDetails.length; index++) {
       const element = objFormA.supervisorDetails[index];
       const exists = supervisorDetails.find((x) => x.userId == element.userId);
-      console.log('GET ELEMNT', typeof element);
       let status = false;
       if (existingObjFormA1) {
-        console.log('existing', existingObjFormA1);
-        console.log('element', element.userId);
         const existingingData = existingObjFormA1.supervisorDetails.find(
           (x) => x.userId === element.userId,
         );
-        console.log('data', existingingData);
         if (existingingData) {
           status = existingingData.standardsDetail.length > 0 ? true : false;
         }
@@ -302,8 +326,9 @@ export class FormAService {
         element.contactNumber = exists.contactNumber;
         element.userId = exists.userId;
         element.isNotify = exists.isNotify;
+        element.college = exists?.college ?? undefined;
+        element.hours = exists?.hours ?? undefined;
         existingSupervisors.push(element);
-        console.log('Element', element);
       }
     }
 
@@ -316,7 +341,6 @@ export class FormAService {
         addSupervisors.push(element);
       }
     }
-
     // if (existingSupervisors.length > 0) {
     //  ;
     // }
@@ -333,22 +357,44 @@ export class FormAService {
     const objFormA1 = new FormA1DTO();
     for (let index = 0; index < objFormA.supervisorDetails.length; index++) {
       const element = objFormA.supervisorDetails[index];
+      for (let i = 0; i < supervisorDetails.length; i++) {
+        if (supervisorDetails[i].userId == element.userId) {
+          element.hours = supervisorDetails[i].hours;
+        }
+      }
       if (existingObjFormA1 === null) {
+        console.log('log', element);
         objFormA1.addSupervisorsDetails(element);
       } else {
         if (formA1 != null) {
           const existing = formA1.supervisorDetails.find(
-            (x) => x.userId === element.userId,
+            (x) => x.userId == element.userId,
           );
+          let hours = undefined;
+          for (let i = 0; i < supervisorDetails.length; i++) {
+            const objSuper = supervisorDetails[i];
+            if (objSuper.userId == element.userId) {
+              hours = objSuper.hours;
+              break;
+            }
+          }
+
           if (existing === undefined) {
             const objSupervisorDetails = new SupervisorDetailsDTOA1();
             objSupervisorDetails.userId = element.userId;
             objSupervisorDetails.contactNumber = element.contactNumber;
             objSupervisorDetails.categoryOfSupervisor =
               element.categoryOfSupervisor;
+            objSupervisorDetails.hours = hours;
             objSupervisorDetails.isFormA1Complete = element.isFormA1Complete;
 
             formA1.supervisorDetails.push(objSupervisorDetails);
+          } else {
+            formA1.supervisorDetails.map((x) => {
+              if (x.userId == existing.userId) {
+                x.hours = hours;
+              }
+            });
           }
         }
         // removeFromExisting = existingObjFormA1.supervisorDetails.filter(
@@ -472,8 +518,6 @@ export class FormAService {
       await this.accreditionService.getAccreditionByAccreditionId(
         accreditionId,
       );
-
-    console.log(accredition);
 
     if (accredition.isFormA1Complete) {
       throw new BadRequestException(

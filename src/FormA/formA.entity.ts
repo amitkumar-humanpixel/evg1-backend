@@ -14,7 +14,7 @@ export const FormASchema = new mongoose.Schema(
       hours: [
         {
           days: { type: String },
-          isChecked: { type: Boolean, default: false },
+          isChecked: { type: String },
           hours: { type: String },
           startTime: { type: String },
           finishTime: { type: String },
@@ -27,7 +27,7 @@ export const FormASchema = new mongoose.Schema(
         placementId: { type: Number, ref: 'facility-staff' },
         hoursDetails: [
           {
-            isChecked: { type: Boolean, default: false },
+            isChecked: { type: String },
             days: { type: String },
             hours: { type: String },
             startTime: { type: String },
@@ -36,7 +36,7 @@ export const FormASchema = new mongoose.Schema(
         ],
         onCall: [
           {
-            isChecked: { type: Boolean, default: false },
+            isChecked: { type: String },
             days: { type: String },
             hours: { type: String },
             startTime: { type: String },
@@ -55,13 +55,22 @@ export const FormASchema = new mongoose.Schema(
         categoryOfSupervisor: { type: String, required: true },
         isFormA1Complete: { type: Boolean },
         isNotify: { type: Boolean, default: false },
+        college: {
+          type: [String],
+          enum: ['RACGP', 'ACRRM'],
+        },
       },
     ],
     practiceStandards: [
       {
         title: { type: String },
         status: { type: String },
-        filePath: { type: String },
+        filePath: [
+          {
+            fileName: { type: String },
+            fileUrl: { type: String },
+          },
+        ],
         remarks: { type: String },
       },
     ],

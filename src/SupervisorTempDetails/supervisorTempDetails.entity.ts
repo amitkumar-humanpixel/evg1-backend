@@ -10,9 +10,10 @@ export const SupervisorTempDetailSchema = new mongoose.Schema(
       categoryOfSupervisor: { type: String },
       educational: { type: Boolean },
       clinical: { type: Boolean },
+      isAgree: { type: Boolean },
       hours: [
         {
-          isChecked: { type: Boolean, default: false },
+          isChecked: { type: String },
           days: { type: String },
           hours: { type: String },
           startTime: { type: String },
@@ -23,8 +24,13 @@ export const SupervisorTempDetailSchema = new mongoose.Schema(
       standardsDetail: [
         {
           title: { type: String },
-          status: { type: Boolean },
-          filePath: { type: String },
+          status: { type: String },
+          filePath: [
+            {
+              fileName: { type: String },
+              fileUrl: { type: String },
+            },
+          ],
         },
       ],
     },
