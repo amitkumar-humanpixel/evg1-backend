@@ -24,6 +24,7 @@ const dbOptions = {
   poolSize: 10,
   useNewUrlParser: true,
   useUnifiedTopology: true,
+  autoCreate: true
 };
 
 @Module({
