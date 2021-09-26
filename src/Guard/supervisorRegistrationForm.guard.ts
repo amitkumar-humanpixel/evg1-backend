@@ -32,7 +32,8 @@ export class SupervisorRegistrationFormGuard implements CanActivate {
               userDetails[0].role.toLowerCase() === 'super_admin' ||
               userDetails[0].role.toLowerCase() === 'principal_supervisor' ||
               userDetails[0].role.toLowerCase() ===
-              'accreditation_support_coordinator'
+              'accreditation_support_coordinator' ||
+              userDetails[0].role.toLowerCase() === 'accreditor'
             ) {
               return true;
             } else {

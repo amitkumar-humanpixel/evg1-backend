@@ -19,14 +19,18 @@ import { HttpExceptionFilter } from 'src/Filter/exception.filter';
 import { AccreditionGuard } from 'src/Guard/accredition.guard';
 import { OktaGuard } from 'src/Guard/okta.guard';
 import { ParseObjectIdPipe } from 'src/Pipe/objectId.pipe';
-import { CreateReqAccreditationDTO, PostDetailAddDTO } from './accredition.dto';
+import {
+  CreateReqAccreditationDTO,
+  PostDetailAddDTO,
+  ReaccreditationChecklistDTO,
+} from './accredition.dto';
 import { AccreditionService } from './accredition.service';
 
 @Controller('accredited')
 @UseFilters(new HttpExceptionFilter())
 @UseGuards(OktaGuard)
 export class AccreditionController {
-  constructor(private readonly accreditionService: AccreditionService) {}
+  constructor(private readonly accreditionService: AccreditionService) { }
 
   @Get(':userId')
   @UsePipes(ValidationPipe)
@@ -92,6 +96,28 @@ export class AccreditionController {
     }
   }
 
+  @Post('reaccreditation-checklist')
+  @UsePipes(new ValidationPipe({ transform: true }))
+  async reaccreditationChecklist(
+    @Res() res,
+    @Body() reaccreditationChecklist: ReaccreditationChecklistDTO,
+  ) {
+    try {
+      const accreditionId =
+        await this.accreditionService.updateAccreditionChecklist(
+          reaccreditationChecklist,
+        );
+      return res
+        .status(HttpStatus.OK)
+        .json(ApiResponseDTO.setResponse('SUCCESS', accreditionId));
+    } catch (error: any) {
+      console.log(error);
+      return res
+        .status(HttpStatus.BAD_REQUEST)
+        .json(ApiResponseDTO.setResponse('ERROR', error['message']));
+    }
+  }
+
   @Get('post-detail/:id')
   @UsePipes(ValidationPipe)
   async submitRegistrarDetails(
@@ -105,6 +131,29 @@ export class AccreditionController {
           ApiResponseDTO.setResponse(
             'SUCCESS',
             await this.accreditionService.getAccreditionById(id),
+          ),
+        );
+    } catch (error: any) {
+      console.log(error);
+      return res
+        .status(HttpStatus.BAD_REQUEST)
+        .json(ApiResponseDTO.setResponse('ERROR', error['message']));
+    }
+  }
+
+  @Get('reaccreditation-checklist/:id')
+  @UsePipes(ValidationPipe)
+  async getReaccreditationChecklist(
+    @Param('id', ParseObjectIdPipe) id: ObjectId,
+    @Res() res,
+  ) {
+    try {
+      return res
+        .status(HttpStatus.OK)
+        .json(
+          ApiResponseDTO.setResponse(
+            'SUCCESS',
+            await this.accreditionService.getReaccreditionCheckList(id),
           ),
         );
     } catch (error: any) {

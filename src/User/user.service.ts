@@ -18,8 +18,6 @@ export class UserService {
   constructor(
     private readonly userDAL: UserDAL,
     private readonly csvParser: CSVParser,
-    @Inject(forwardRef(() => AccreditionService))
-    private readonly accreditionService: AccreditionService,
   ) { }
 
   async insertUser(user: UserDTO): Promise<IUser> {
@@ -164,10 +162,6 @@ export class UserService {
       }
     }
 
-    // if (users.length > 0) {
-    //   this.accreditionService.addSuperAdminAndASC(users);
-    // }
-
     return validationObject;
   }
   async getUserAndFacilityDetails(userId: number) {
@@ -176,6 +170,10 @@ export class UserService {
 
   async getSuperAdmins() {
     return await this.userDAL.getSuperAdmins();
+  }
+
+  async getASCUsers() {
+    return await this.userDAL.getASCUsers();
   }
 
   async getAccreditors() {

@@ -42,9 +42,9 @@ const dbOptions = {
     FacilityRegistrarModule,
     FacilityStaffModule,
     AccreditionModule,
+    FormAModule,
     DashboardModule,
     SupervisorTempDetailModule,
-    FormAModule,
     FormA1Module,
     FormBModule,
     SupervisorRegistrationFormModule,
@@ -52,4 +52,4 @@ const dbOptions = {
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule { }

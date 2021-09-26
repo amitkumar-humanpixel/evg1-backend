@@ -30,7 +30,7 @@ export class FormBService {
     private accreditionService: AccreditionService,
     @Inject(forwardRef(() => UserService))
     private userService: UserService,
-  ) {}
+  ) { }
 
   async getAccreditors(facilityId: number): Promise<GetFacilityStaffUser[]> {
     let supervisors =
@@ -151,7 +151,7 @@ export class FormBService {
     formB.dateOfReportComplete = summary.dateOfReportComplete;
     formB.assessment = summary.assessment;
     formB.applications = summary.applications;
-    formB.shadyOaksPractice = summary.shadyOaksPractice;
+    formB.practiceDetail = summary.practiceDetail;
     await this.formBDAL.updateFormB(formB._id, formB);
     await this.accreditionService.completeFormBSteps(
       formB.accreditionId as ObjectId,
@@ -168,6 +168,7 @@ export class FormBService {
     formB.summery = otherDetails.summery;
     formB.recomendationPanel = otherDetails.recomendationPanel;
     formB.reviewedBy = otherDetails.reviewedBy;
+    formB.isAgree = otherDetails.isAgree;
     formB.isCompleted = true;
     await this.formBDAL.updateFormB(formB._id, formB);
     await this.accreditionService.completeFormBSteps(
@@ -191,14 +192,13 @@ export class FormBService {
 
     response.accreditorDetails = new accreditorDetails();
     response.accreditorDetails.userId = accreditor?.userId ?? undefined;
-    response.accreditorDetails.name = `${accreditor?.firstName ?? ''} ${
-      accreditor?.lastName ?? ''
-    }`;
+    response.accreditorDetails.name = `${accreditor?.firstName ?? ''} ${accreditor?.lastName ?? ''
+      }`;
     response.assessment = data?.assessment ?? [];
     response.classification = data?.classification ?? '';
     response.dateOfVisit = data?.dateOfVisit ?? '';
     response.dateOfReportComplete = data?.dateOfReportComplete ?? '';
-    response.shadyOaksPractice = data?.shadyOaksPractice ?? '';
+    response.practiceDetail = data?.practiceDetail ?? '';
     response.applications = new Array<applicationsDTO>();
     for (let index = 0; index < data?.applications.length ?? 0; index++) {
       const element = data.applications[index];
@@ -216,9 +216,8 @@ export class FormBService {
       supervisorData = data.formA.supervisorDetails.find(
         (x) => x.userId == element.supervisorId,
       );
-      application.categoryOfSupervisor = `${
-        supervisorData?.categoryOfSupervisor ?? ''
-      }`;
+      application.categoryOfSupervisor = `${supervisorData?.categoryOfSupervisor ?? ''
+        }`;
 
       response.applications.push(application);
     }

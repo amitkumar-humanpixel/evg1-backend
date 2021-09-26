@@ -3,7 +3,7 @@ import { IAccredition } from 'src/Accredition/accredition.interface';
 import {
   SupervisorDetailsDTOA1,
   addressRecommendationDTO,
-  finalCheckListDTO,
+  checkListDTO,
   FormStatus,
 } from './formA1.dto';
 
@@ -14,7 +14,7 @@ export interface IFormA1 extends Document {
   isDeleted: boolean;
   supervisorDetails: SupervisorDetailsDTOA1[];
   addressRecommendation: addressRecommendationDTO;
-  finalCheckList: finalCheckListDTO[];
+  finalCheckList: checkListDTO[];
   status: FormStatus;
   isNotify: boolean;
 }

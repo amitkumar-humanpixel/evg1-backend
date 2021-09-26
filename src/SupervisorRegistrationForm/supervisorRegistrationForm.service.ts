@@ -13,6 +13,7 @@ export class SupervisorRegistrationFormService {
     email: string,
     firstName: string,
     lastName: string,
+    practiceName: string,
   ) {
     const promiseArr = [];
     promiseArr.push(this.userService.getUserByUserId(userId));
@@ -29,6 +30,7 @@ export class SupervisorRegistrationFormService {
         email,
         firstName,
         lastName,
+        practiceName,
       );
     }
   }

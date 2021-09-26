@@ -22,11 +22,15 @@ export class DashboardService {
           );
       } else if (
         user.role.toLowerCase() === 'practice_manager' ||
-        user.role.toLowerCase() === 'principal_supervisor' ||
-        user.role.toLowerCase() === 'accreditor'
+        user.role.toLowerCase() === 'principal_supervisor'
       ) {
         data =
-          await this.accreditionService.getPracticeManagerDashboardStatusDetails(
+          await this.accreditionService.getPracticeManagerDataDashboardStatusDetails(
+            userId,
+          );
+      } else if (user.role.toLowerCase() === 'accreditor') {
+        data =
+          await this.accreditionService.getAccreditorDashboardStatusDetails(
             userId,
           );
       } else {
@@ -66,15 +70,32 @@ export class DashboardService {
         currentStatus = supervisorStatus ? 'COMPLETE' : 'INCOMPLETE';
       } else if (
         user.role.toLowerCase() === 'practice_manager' ||
-        user.role.toLowerCase() === 'principal_supervisor' ||
-        user.role.toLowerCase() === 'accreditor'
+        user.role.toLowerCase() === 'principal_supervisor'
       ) {
-        data = await this.accreditionService.getPracticeManagerDashboardData(
-          userId,
-          page,
-          limit,
-          status,
-        );
+        if (status === 'COMPLETE' || status === 'INCOMPLETE') {
+          data = await this.accreditionService.getPracticeManagerDetailData(
+            userId,
+            page,
+            limit,
+            status,
+          );
+        } else {
+          data =
+            await this.accreditionService.getPracticeManagerAndAccreditorDashboardData(
+              userId,
+              page,
+              limit,
+              status,
+            );
+        }
+      } else if (user.role.toLowerCase() === 'accreditor') {
+        data =
+          await this.accreditionService.getPracticeManagerAndAccreditorDashboardData(
+            userId,
+            page,
+            limit,
+            status,
+          );
       } else {
         data = await this.accreditionService.getDashboardData(
           page,
@@ -114,8 +135,13 @@ export class DashboardService {
           user.role.toLowerCase().includes('accreditor')
         ) {
           let isCheck = false;
-
-          if (!obj.isPostDetailsComplete) {
+          console.log(obj.isReaccreditationChecklistComplete);
+          if (!obj.isReaccreditationChecklistComplete) {
+            console.log('140');
+            dashboardData.formType = 'reaccreditationChecklist';
+            isCheck = true;
+          } else if (!obj.isPostDetailsComplete) {
+            console.log('143');
             dashboardData.formType = 'postDetails';
             isCheck = true;
           }
@@ -138,6 +164,14 @@ export class DashboardService {
                 isCheck = true;
                 break;
               }
+            }
+          }
+
+          if (!isCheck) {
+            console.log(obj.isAddressRecommendation);
+            if (!obj.isAddressRecommendation) {
+              dashboardData.formType = 'previousRecommendations';
+              isCheck = true;
             }
           }
 

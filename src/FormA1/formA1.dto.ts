@@ -1,8 +1,14 @@
 import { Type } from 'class-transformer';
 import { IsNotEmpty, ValidateNested } from 'class-validator';
 import { ObjectId } from 'mongoose';
+import { college } from 'src/Accredition/accredition.dto';
 import { IAccredition } from 'src/Accredition/accredition.interface';
-import { GetSupervisorDetails, SupervisorDetailsDTO } from '../FormA/formA.dto';
+import { IUser } from 'src/User/user.interface';
+import {
+  fileDetal,
+  GetSupervisorDetails,
+  SupervisorDetailsDTO,
+} from '../FormA/formA.dto';
 export class WorkingHoursDTO {
   days: string;
   hours: string;
@@ -14,7 +20,7 @@ export class FormA1DTO {
   isDeleted: boolean;
   supervisorDetails: SupervisorDetailsDTOA1[];
   addressRecommendation: addressRecommendationDTO;
-  finalCheckList: finalCheckListDTO[];
+  finalCheckList: checkListDTO[];
   status: FormStatus;
 
   constructor() {
@@ -33,11 +39,13 @@ export class FormA1DTO {
   }
 
   addSupervisorsDetails(supervisorDetail: SupervisorDetailsDTO) {
+    console.log(supervisorDetail);
     const objSupervisorDetails = new SupervisorDetailsDTOA1();
     objSupervisorDetails.userId = supervisorDetail.userId;
     objSupervisorDetails.contactNumber = supervisorDetail.contactNumber;
     objSupervisorDetails.categoryOfSupervisor =
       supervisorDetail.categoryOfSupervisor;
+    objSupervisorDetails.hours = supervisorDetail.hours;
     objSupervisorDetails.isFormA1Complete = supervisorDetail.isFormA1Complete;
 
     this.addSupervisorDetails(objSupervisorDetails);
@@ -45,27 +53,29 @@ export class FormA1DTO {
 }
 
 export class TimeDTO {
-  isChecked: boolean;
+  isChecked: string;
   days: string;
-  hours: number;
-  startTime: number;
-  finishTime: number;
+  hours: string;
+  startTime: string;
+  finishTime: string;
 }
-export class SupervisorDetailsDTOA1 extends SupervisorDetailsDTO {
-  hours: TimeDTO[];
-  standardsDetail: standardsDetailDTO[];
+export class SupervisorDetailsDTOA1 {
+  userId: number | IUser;
+  contactNumber: string;
+  categoryOfSupervisor: string;
   isFormA1Complete: boolean;
-  constructor() {
-    super();
-    this.hours = [];
-    this.standardsDetail = [];
-  }
+  isNotify: boolean;
+  status: boolean;
+  hours: Array<TimeDTO>;
+  college: Array<college>;
+  standardsDetail: standardsDetailDTO[];
+  isAgree: boolean;
 }
 
 export class standardsDetailDTO {
   title: string;
-  status: boolean;
-  filePath: string;
+  status: string;
+  filePath: Array<fileDetal>;
 }
 
 export class addressRecommendationDTO {
@@ -75,11 +85,11 @@ export class addressRecommendationDTO {
   actioned: string;
 }
 
-export class finalCheckListDTO {
+export class checkListDTO {
   @IsNotEmpty({ message: 'Final CheckList title should not be empty' })
   title: string;
   @IsNotEmpty({ message: 'Final CheckList status should not be empty' })
-  status: boolean;
+  status: string;
 }
 
 export class finalCheckListDetailsDTO {
@@ -87,9 +97,9 @@ export class finalCheckListDetailsDTO {
   recommendation: string;
   @IsNotEmpty({ message: 'Actioned should not be empty' })
   actioned: string;
-  @Type(() => finalCheckListDTO)
+  @Type(() => checkListDTO)
   @ValidateNested({ each: true })
-  finalCheckLists: finalCheckListDTO[];
+  finalCheckLists: checkListDTO[];
 }
 
 export enum FormStatus {
@@ -99,9 +109,14 @@ export enum FormStatus {
   'Cancelled' = 'Cancelled',
 }
 
-export class GetSupervisorDetail extends GetSupervisorDetails {
+export class GetSupervisorDetail {
   contactNumber: string;
   categoryOfSupervisor: string;
-  hours: TimeDTO[];
   standardsDetail: standardsDetailDTO[];
+  isAgree: boolean;
+  userId: number | IUser;
+  username: string;
+  email: string;
+  college: Array<college>;
+  hours: Array<TimeDTO>;
 }

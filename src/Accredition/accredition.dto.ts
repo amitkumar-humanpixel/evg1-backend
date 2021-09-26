@@ -1,5 +1,7 @@
-import { IsNotEmpty, IsNumber } from 'class-validator';
+import { Type } from 'class-transformer';
+import { IsNotEmpty, IsNumber, ValidateNested } from 'class-validator';
 import { ObjectId } from 'mongoose';
+import { checkListDTO } from 'src/FormA1/formA1.dto';
 export class PostDetailAddDTO {
   @IsNotEmpty({ message: 'Facility Id should not be empty' })
   @IsNumber({ allowNaN: false }, { message: 'User Id should be number' })
@@ -10,7 +12,6 @@ export class PostDetailAddDTO {
   phone: string;
   @IsNotEmpty({ message: 'Total Number of GPs should not be empty' })
   totalNumberGPs: string;
-  @IsNotEmpty({ message: 'Practice Website should not be empty' })
   practiceWebsite: string;
   @IsNotEmpty({ message: 'College should not be empty' })
   college: college;
@@ -24,9 +25,29 @@ export class PostDetailAddDTO {
   isFormA1Complete = false;
   isFormBComplete = false;
   isPostDetailsComplete = true;
+  isReaccreditationChecklistComplete = true;
+}
+
+export class ReaccreditationChecklistDTO {
+  @IsNotEmpty({ message: 'Facility Id should not be empty' })
+  @IsNumber({ allowNaN: false }, { message: 'User Id should be number' })
+  facilityId: number;
+  @Type(() => checkListDTO)
+  @ValidateNested({ each: true })
+  reaccreditationChecklist: checkListDTO[];
+  status: string;
+  isDeleted = false;
+  isFormAComplete = false;
+  isFormA1Complete = false;
+  isFormBComplete = false;
+  isReaccreditationChecklistComplete = true;
 }
 
 export class PostDetailsDTO extends PostDetailAddDTO {
+  facilityName: string;
+}
+
+export class ReaccreditionCheckListDTO extends ReaccreditationChecklistDTO {
   facilityName: string;
 }
 
@@ -104,6 +125,11 @@ export class AccreditionSideBarDTO {
 }
 
 export class supervisorDataDTO {
+  paginatedResult: any;
+  totalCount: any;
+}
+
+export class practiceManagerDataDTO {
   paginatedResult: any;
   totalCount: any;
 }

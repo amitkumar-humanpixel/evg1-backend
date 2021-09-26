@@ -6,7 +6,7 @@ import { Model, ObjectId } from 'mongoose';
 
 @Injectable()
 export class UserDAL {
-  constructor(@InjectModel('user') private readonly userModel: Model<IUser>) {}
+  constructor(@InjectModel('user') private readonly userModel: Model<IUser>) { }
 
   async addUser(user: UserDTO): Promise<IUser> {
     const newUser = new this.userModel(user);
@@ -97,6 +97,12 @@ export class UserDAL {
 
   async getSuperAdmins(): Promise<IUser[]> {
     return await this.userModel.find({ role: /admin/i });
+  }
+
+  async getASCUsers(): Promise<IUser[]> {
+    return await this.userModel.find({
+      role: /Accreditation_Support_Coordinator/i,
+    });
   }
 
   async getAccreditor(): Promise<any> {

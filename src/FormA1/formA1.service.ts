@@ -26,6 +26,7 @@ export class FormA1Service {
     private readonly accreditionService: AccreditionService,
     @Inject(forwardRef(() => FormBService))
     private readonly formBService: FormBService,
+    @Inject(forwardRef(() => UserService))
     private readonly userService: UserService,
     private readonly tempSupervisorDetail: SupervisorTempDetailService,
   ) { }
@@ -80,6 +81,7 @@ export class FormA1Service {
         objSupervisorDetails.categoryOfSupervisor =
           supervisor.categoryOfSupervisor;
         objSupervisorDetails.isFormA1Complete = supervisor.isFormA1Complete;
+        objSupervisorDetails.isAgree = supervisor?.isAgree ?? true;
 
         objFormA1.supervisorDetails.push(objSupervisorDetails);
       }
@@ -89,10 +91,11 @@ export class FormA1Service {
       if (objFormA1.supervisorDetails[index].userId == supervisor.userId) {
         objFormA1.supervisorDetails[index].contactNumber =
           supervisor.contactNumber;
-        objFormA1.supervisorDetails[index].hours = supervisor.hours;
+        // objFormA1.supervisorDetails[index].hours = supervisor.hours;
         objFormA1.supervisorDetails[index].standardsDetail =
           supervisor.standardsDetail;
         objFormA1.supervisorDetails[index].isFormA1Complete = true;
+        objFormA1.supervisorDetails[index].isAgree = supervisor.isAgree;
       }
     }
 
@@ -157,6 +160,7 @@ export class FormA1Service {
     accreditionId: ObjectId,
     supervisor: SupervisorDetailsDTOA1,
   ) {
+    console.log(supervisor);
     await this.tempSupervisorDetail.submitSupervisorDetail(
       accreditionId,
       supervisor,
@@ -174,25 +178,29 @@ export class FormA1Service {
       );
     const response = new GetSupervisorDetail();
     if (tempDetails.length == 0) {
+      console.log(id);
       const responseData = await this.formA1DAL.getSupervisorsDetails(id);
-      const userData = responseData.supervisorDetails.find(
-        (x) => x.userId == userId,
-      );
-
-      response.hours = userData?.hours ?? undefined;
-      response.userId = userData?.userId ?? undefined;
-      response.categoryOfSupervisor = userData?.categoryOfSupervisor ?? '';
-      response.standardsDetail = userData?.standardsDetail ?? undefined;
-      response.contactNumber = userData?.contactNumber ?? '';
+      if (responseData !== null) {
+        const userData = responseData.supervisorDetails.find(
+          (x) => x.userId == userId,
+        );
+        // response.hours = userData?.hours ?? undefined;
+        response.userId = userData?.userId ?? undefined;
+        response.categoryOfSupervisor = userData?.categoryOfSupervisor ?? '';
+        response.standardsDetail = userData?.standardsDetail ?? undefined;
+        response.contactNumber = userData?.contactNumber ?? '';
+        response.isAgree = userData?.isAgree ?? false;
+      }
     } else {
       const details = tempDetails[0];
-      response.hours = details?.supervisorDetails?.hours ?? undefined;
+      // response.hours = details?.supervisorDetails?.hours ?? undefined;
       response.userId = details?.supervisorDetails?.userId ?? undefined;
       response.categoryOfSupervisor =
         details?.supervisorDetails?.categoryOfSupervisor ?? '';
       response.standardsDetail =
         details?.supervisorDetails?.standardsDetail ?? undefined;
-      response.contactNumber = details?.supervisorDetails.contactNumber ?? '';
+      response.contactNumber = details?.supervisorDetails?.contactNumber ?? '';
+      response.isAgree = details?.supervisorDetails?.isAgree ?? false;
     }
 
     return response;
@@ -209,7 +217,7 @@ export class FormA1Service {
       accreditionId,
     );
 
-    objFormA1.finalCheckList = finalCheckListDetails.finalCheckLists;
+    // objFormA1.finalCheckList = finalCheckListDetails.finalCheckLists;
     objFormA1.addressRecommendation.actioned = finalCheckListDetails.actioned;
     objFormA1.addressRecommendation.recommendation =
       finalCheckListDetails.recommendation;
@@ -221,9 +229,12 @@ export class FormA1Service {
       objFormA1.accreditionId as ObjectId,
     );
 
-    await this.accreditionService.completeFinalCheckList(
+    // await this.accreditionService.completeFinalCheckList(
+    //   objFormA1.accreditionId as ObjectId,
+    //   'Final CheckList',
+    // );
+    await this.accreditionService.completeAddressRecommendation(
       objFormA1.accreditionId as ObjectId,
-      'Final CheckList',
     );
     const formB = await this.formBService.getFormBByAccreditionId(
       objFormA1.accreditionId as ObjectId,
@@ -244,9 +255,9 @@ export class FormA1Service {
         const element = objFormA1.supervisorDetails[index];
         app.supervisorId = element.userId;
         if (accredition.college === 'RACGP') {
-          app.RACGP = true;
+          app.RACGP = 'true';
         } else {
-          app.ACRRM = true;
+          app.ACRRM = 'true';
         }
         objFormB.applications.push(app);
       }
@@ -292,9 +303,14 @@ export class FormA1Service {
   }
 
   async resubmitForm(id: ObjectId) {
-    const accredition = await this.accreditionService.getAccreditionById(id);
+    const accredition =
+      await this.accreditionService.getAccreditionByAccreditionId(id);
     accredition.status = 'INCOMPLETE';
-    await this.accreditionService.updateAccreditionDetails(accredition);
+    accredition.isFormAComplete = false;
+
+    accredition.formA.map((x) => (x.isComplete = false));
+
+    await this.accreditionService.updateAccreditionByAccreditionId(accredition);
 
     const objFormA1 = await this.formA1DAL.getFormA1ByAccreditionId(id);
     objFormA1.isNotify = false;

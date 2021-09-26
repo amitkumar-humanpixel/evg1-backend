@@ -69,12 +69,14 @@ export class FormA1DAL {
       ) {
         if (fileData?.supervisorDetails[i]?.standardsDetail[j]?.filePath) {
           if (
-            fileData?.supervisorDetails[i]?.standardsDetail[
-              j
-            ]?.filePath.includes(process.env.BASE_URL + pathData[1]) ??
-            true
+            fileData?.supervisorDetails[i]?.standardsDetail[j]?.filePath?.some(
+              (x) => x.fileUrl === process.env.BASE_URL + pathData[1],
+            )
           ) {
-            fileData.supervisorDetails[i].standardsDetail[j].filePath = '';
+            fileData.supervisorDetails[i].standardsDetail[j].filePath =
+              fileData.supervisorDetails[i].standardsDetail[j].filePath?.filter(
+                (x) => x.fileUrl !== process.env.BASE_URL + pathData[1],
+              );
             break;
           }
         }

@@ -9,7 +9,7 @@ export class FormBDAL {
   constructor(
     @InjectModel('formB')
     private readonly formBModel: Model<IFormB>,
-  ) {}
+  ) { }
 
   async addFormB(formB: FormBDTO): Promise<string> {
     const newFormB = new this.formBModel(formB);
@@ -148,6 +148,7 @@ export class FormBDAL {
       summery: 1,
       recomendationPanel: 1,
       reviewedBy: 1,
+      isAgree: 1,
     });
   }
 }

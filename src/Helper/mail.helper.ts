@@ -37,6 +37,7 @@ export class Mailer extends EventEmitter2 {
     email: string,
     firstName: string,
     lastName: string,
+    practiceName: string,
   ) => {
     const html = mailTemplateForSupervisorRegistor(
       reciverFirstName,
@@ -46,6 +47,7 @@ export class Mailer extends EventEmitter2 {
       email,
       firstName,
       lastName,
+      practiceName,
     );
     const mailBody = {
       from: process.env.FROM_EMAIL,

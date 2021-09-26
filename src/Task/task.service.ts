@@ -17,7 +17,7 @@ export class TasksService {
   ) {
     const userSyncJob = new CronJob(
       process.env.CRON_EXPRESSION,
-      this.handleCron,
+      this.handleCron.bind(this),
       null,
       true,
       'Australia/Sydney',

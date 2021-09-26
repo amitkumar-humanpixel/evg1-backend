@@ -15,6 +15,7 @@ import { SupervisorTempDetailModule } from 'src/SupervisorTempDetails/supervisor
     MongooseModule.forFeature([{ name: 'formA1', schema: FormA1Schema }]),
     UserModule,
     forwardRef(() => AccreditionModule),
+    forwardRef(() => UserModule),
     forwardRef(() => FormAModule),
     forwardRef(() => FormBModule),
     forwardRef(() => SupervisorTempDetailModule),
@@ -23,4 +24,4 @@ import { SupervisorTempDetailModule } from 'src/SupervisorTempDetails/supervisor
   providers: [FormA1Service, FormA1DAL],
   exports: [FormA1Service],
 })
-export class FormA1Module {}
+export class FormA1Module { }

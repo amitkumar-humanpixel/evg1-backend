@@ -17,25 +17,26 @@ export const FormBSchema = new mongoose.Schema(
     assessment: [
       {
         title: { type: String },
-        status: { type: Boolean },
+        status: { type: String },
       },
     ],
     applications: [
       {
         supervisorId: { type: Number, ref: 'user' },
         isFormRegistrar: { type: Boolean },
-        RACGP: { type: Boolean },
-        ACRRM: { type: Boolean },
-        consideration: { type: Boolean },
+        RACGP: { type: String },
+        ACRRM: { type: String },
+        consideration: { type: String },
         remarks: { type: String },
       },
     ],
-    shadyOaksPractice: { type: String },
+    practiceDetail: { type: String },
 
     previousIssues: { type: String },
     summery: { type: String },
     recomendationPanel: { type: String },
     reviewedBy: { type: String },
+    isAgree: { type: Boolean },
   },
   { timestamps: true },
 );

@@ -27,7 +27,7 @@ import { OktaGuard } from 'src/Guard/okta.guard';
 @UseGuards(OktaGuard)
 @UseFilters(new HttpExceptionFilter())
 export class FormA1Controller {
-  constructor(private readonly formA1Service: FormA1Service) {}
+  constructor(private readonly formA1Service: FormA1Service) { }
 
   @Get('supervisors/:id/:userId')
   async getSupervisors(
@@ -189,7 +189,12 @@ export class FormA1Controller {
       await this.formA1Service.resubmitForm(id);
       return res
         .status(HttpStatus.OK)
-        .json(ApiResponseDTO.setResponse('SUCCESS', 'Updated Successfully.'));
+        .json(
+          ApiResponseDTO.setResponse(
+            'SUCCESS',
+            'Form Re-Submitted Successfully.',
+          ),
+        );
     } catch (error: any) {
       console.log(error);
       return res

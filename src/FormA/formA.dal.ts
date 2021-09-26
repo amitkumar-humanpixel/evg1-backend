@@ -181,12 +181,15 @@ export class FormADAL {
     if (fileData) {
       for (let i = 0; i < fileData.practiceStandards.length; i++) {
         if (
-          fileData.practiceStandards[i]?.filePath?.includes(
-            process.env.BASE_URL + pathData[1],
-          ) ??
-          false
+          fileData.practiceStandards[i]?.filePath?.some(
+            (x) => x.fileUrl === process.env.BASE_URL + pathData[1],
+          )
         ) {
-          fileData.practiceStandards[i].filePath = '';
+          fileData.practiceStandards[i].filePath = fileData.practiceStandards[
+            i
+          ]?.filePath?.filter(
+            (x) => x.fileUrl !== process.env.BASE_URL + pathData[1],
+          );
           break;
         }
       }

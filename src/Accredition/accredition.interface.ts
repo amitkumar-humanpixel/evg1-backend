@@ -1,5 +1,6 @@
 import { ObjectId } from 'mongoose';
 import { IFacility } from 'src/Facility/facility.interface';
+import { checkListDTO } from 'src/FormA1/formA1.dto';
 import { StepDetails } from './accredition.dto';
 
 export interface IAccredition extends Document {
@@ -8,6 +9,7 @@ export interface IAccredition extends Document {
   isFormA1Complete: boolean;
   isFormBComplete: boolean;
   isPostDetailsComplete: boolean;
+  isReaccreditationChecklistComplete: boolean;
   facilityId: number | IFacility;
   address: string;
   phone: string;
@@ -20,4 +22,6 @@ export interface IAccredition extends Document {
   formB: Array<StepDetails>;
   status: string;
   users: Array<string>;
+  reaccreditationChecklist: Array<checkListDTO>;
+  isAddressRecommendation: boolean;
 }

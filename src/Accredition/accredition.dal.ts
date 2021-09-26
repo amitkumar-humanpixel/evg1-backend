@@ -5,6 +5,8 @@ import {
   CreateAccreditionDTO,
   PostDetailAddDTO,
   PostDetailsDTO,
+  ReaccreditationChecklistDTO,
+  ReaccreditionCheckListDTO,
 } from './accredition.dto';
 import { IAccredition } from './accredition.interface';
 
@@ -27,6 +29,17 @@ export class AccreditionDAL {
     return await this.accreditionModel.find({});
   }
   async updateAccredition(accredition: PostDetailAddDTO): Promise<ObjectId> {
+    const objAccredition = await this.accreditionModel.findOneAndUpdate(
+      { facilityId: accredition.facilityId },
+      accredition,
+      { upsert: true },
+    );
+    return objAccredition._id;
+  }
+
+  async updateAccreditionChecklist(
+    accredition: ReaccreditationChecklistDTO,
+  ): Promise<ObjectId> {
     const objAccredition = await this.accreditionModel.findOneAndUpdate(
       { facilityId: accredition.facilityId },
       accredition,
@@ -131,6 +144,8 @@ export class AccreditionDAL {
         formB: 1,
         _id: 1,
         isPostDetailsComplete: 1,
+        isReaccreditationChecklistComplete: 1,
+        isAddressRecommendation: 1,
       },
     });
     query.push({
@@ -190,6 +205,8 @@ export class AccreditionDAL {
         formB: 1,
         _id: 1,
         isPostDetailsComplete: 1,
+        isReaccreditationChecklistComplete: 1,
+        isAddressRecommendation: 1,
       },
     });
     query.push({
@@ -222,6 +239,18 @@ export class AccreditionDAL {
     return await this.accreditionModel.aggregate(query).allowDiskUse(true);
   }
 
+  async getPracticeManagerDashboardStatusData(userId: number): Promise<any> {
+    const query: any = [];
+
+    query.push({
+      $match: {
+        users: { $in: [userId.toString()] },
+      },
+    });
+
+    return await this.accreditionModel.aggregate(query).allowDiskUse(true);
+  }
+
   async getPracticeNameFromAccreditionId(
     accreditionId: ObjectId,
   ): Promise<any> {
@@ -248,6 +277,68 @@ export class AccreditionDAL {
       },
     });
 
+    return await this.accreditionModel.aggregate(query).allowDiskUse(true);
+  }
+
+  async getPracticeManagerDetailData(
+    userId: number,
+    skip: number,
+    limit: number,
+  ): Promise<any> {
+    const query: any = [];
+
+    query.push({
+      $match: {
+        $or: [{ status: 'INCOMPLETE' }, { status: 'COMPLETE' }],
+        users: { $in: [userId.toString()] },
+      },
+    });
+
+    query.push({
+      $lookup: {
+        from: 'facilities',
+        localField: 'facilityId',
+        foreignField: 'facilityId',
+        as: 'facility',
+      },
+    });
+    query.push({
+      $unwind: {
+        path: '$facility',
+      },
+    });
+    query.push({
+      $project: {
+        status: 1,
+        createdAt: 1,
+        facility: 1,
+        facilityId: 1,
+        formA: 1,
+        formA1: 1,
+        formB: 1,
+        _id: 1,
+        isPostDetailsComplete: 1,
+        isReaccreditationChecklistComplete: 1,
+        isAddressRecommendation: 1,
+        isFormA1Complete: 1,
+        isFormAComplete: 1,
+      },
+    });
+    query.push({
+      $facet: {
+        paginatedResult: [
+          {
+            $skip: (skip - 1) * limit,
+          },
+          { $limit: limit },
+        ],
+        totalCount: [
+          {
+            $count: 'count',
+          },
+        ],
+      },
+    });
     return await this.accreditionModel.aggregate(query).allowDiskUse(true);
   }
 
@@ -290,6 +381,8 @@ export class AccreditionDAL {
         formB: 1,
         _id: 1,
         isPostDetailsComplete: 1,
+        isReaccreditationChecklistComplete: 1,
+        isAddressRecommendation: 1,
       },
     });
     query.push({
@@ -392,6 +485,54 @@ export class AccreditionDAL {
 
     const output = await this.accreditionModel.aggregate(query);
     return output as unknown as PostDetailsDTO;
+  }
+
+  async getAccreditionByIdReaccreditionCheckList(
+    accreditionId: ObjectId,
+  ): Promise<ReaccreditionCheckListDTO> {
+    const query: any = [
+      {
+        $match: {
+          _id: accreditionId,
+        },
+      },
+    ];
+    query.push({
+      $lookup: {
+        from: 'facilities',
+        localField: 'facilityId',
+        foreignField: 'facilityId',
+        as: 'facility',
+      },
+    });
+    query.push({
+      $unwind: {
+        path: '$facility',
+      },
+    });
+
+    query.push({
+      $addFields: {
+        facilityName: '$facility.practiceName',
+      },
+    });
+    query.push({
+      $project: {
+        facilityId: 1,
+        address: 1,
+        phone: 1,
+        totalNumberGPs: 1,
+        practiceWebsite: 1,
+        college: 1,
+        accreditationBody: 1,
+        accreditationEndDate: 1,
+        reaccreditationChecklist: 1,
+        facilityName: 1,
+      },
+    });
+
+    const output = await this.accreditionModel.aggregate(query);
+    return output as unknown as ReaccreditionCheckListDTO;
   }
 
   async checkUserWithUserId(userId: number): Promise<any> {
