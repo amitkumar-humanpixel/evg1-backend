@@ -300,6 +300,10 @@ export class AccreditionService {
             obj.addSubSteps(form);
           }
         }
+        if (accredition.formA1.length === 0) {
+          obj = new AccreditionSideBarDTO();
+          obj.addDetails('Form A1', false);
+        }
 
         arrSideBar.push(obj);
         obj = new AccreditionSideBarDTO();
