@@ -25,15 +25,15 @@ import { OktaGuard } from 'src/Guard/okta.guard';
 import { ParseObjectIdPipe } from 'src/Pipe/objectId.pipe';
 import { HttpExceptionFilter } from 'src/Filter/exception.filter';
 import { CSVParser } from 'src/Helper/csv.helper';
+import { FacilityGuard } from 'src/Guard/facility-access.guard';
 
 @Controller('facility-registrar')
-@UseGuards(OktaGuard)
 @UseFilters(new HttpExceptionFilter())
 export class FacilityRegistrarController {
   constructor(
     private readonly facilityRegistrarService: FacilityRegistrarService,
     private readonly csvParser: CSVParser,
-  ) {}
+  ) { }
 
   @Post()
   @UsePipes(new ValidationPipe({ transform: true }))
@@ -59,6 +59,8 @@ export class FacilityRegistrarController {
   }
 
   @Get()
+  @UseGuards(OktaGuard)
+  @UseGuards(FacilityGuard)
   async getAllFacilityRegistrar(@Res() res, @Query() query) {
     try {
       const page = parseInt(query?.page ?? 1);
@@ -127,6 +129,8 @@ export class FacilityRegistrarController {
   }
 
   @Post('upload')
+  @UseGuards(OktaGuard)
+  @UseGuards(FacilityGuard)
   @UseInterceptors(FileInterceptor('file'))
   async uploadFile(@Res() res, @UploadedFile() file: Express.Multer.File) {
     try {

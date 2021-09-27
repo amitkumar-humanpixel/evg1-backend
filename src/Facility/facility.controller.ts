@@ -27,6 +27,7 @@ import { HttpExceptionFilter } from 'src/Filter/exception.filter';
 import { ParseObjectIdPipe } from 'src/Pipe/objectId.pipe';
 import { OktaGuard } from 'src/Guard/okta.guard';
 import { CSVParser } from 'src/Helper/csv.helper';
+import { FacilityGuard } from 'src/Guard/facility-access.guard';
 
 @Controller('facility')
 @UseGuards(OktaGuard)
@@ -56,6 +57,7 @@ export class FacilityController {
   }
 
   @Get()
+  @UseGuards(FacilityGuard)
   async getAllFacilitys(@Res() res, @Query() query) {
     const page = parseInt(query?.page ?? 1);
     const limit = parseInt(query?.limit ?? 10);
@@ -110,6 +112,7 @@ export class FacilityController {
   }
 
   @Post('upload')
+  @UseGuards(FacilityGuard)
   @UseInterceptors(FileInterceptor('file'))
   async uploadFile(
     @Headers() headers,

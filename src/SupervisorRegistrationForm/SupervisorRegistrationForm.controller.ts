@@ -21,7 +21,7 @@ import { SupervisorRegistrationFormGuard } from 'src/Guard/supervisorRegistratio
 export class SupervisorRegistrationFormController {
   constructor(
     private readonly SupervisorRegistrationFormService: SupervisorRegistrationFormService,
-  ) {}
+  ) { }
   @Post('submitDetail/:userId')
   @UsePipes(new ValidationPipe({ transform: true }))
   async submitPracticeManagerDetail(
@@ -39,9 +39,7 @@ export class SupervisorRegistrationFormController {
       );
       return res
         .status(HttpStatus.OK)
-        .json(
-          ApiResponseDTO.setResponse('SUCCESS', 'Mail sent successfully!!'),
-        );
+        .json(ApiResponseDTO.setResponse('SUCCESS', 'Mail sent successfully'));
     } catch (error: any) {
       console.log(error);
       return res

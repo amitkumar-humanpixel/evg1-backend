@@ -10,7 +10,7 @@ import { DashboardModule } from './Dashboard/dashboard.module';
 import { FacilityModule } from './Facility/facility.module';
 import { FacilityRegistrarModule } from './FacilityRegistrar/facilityRegistrar.module';
 import { FacilityStaffModule } from './FacilityStaff/facilityStaff.module';
-import { FileUploadModule } from './FileUpload/fileupload.module';
+import { FileDownloaderModule, FileUploadModule } from './FileUpload/fileupload.module';
 
 import { FormAModule } from './FormA/formA.module';
 import { FormA1Module } from './FormA1/formA1.module';
@@ -37,6 +37,7 @@ const dbOptions = {
     ScheduleModule.forRoot(),
     TasksModule,
     FileUploadModule,
+    FileDownloaderModule,
     FacilityModule,
     UserModule,
     FacilityRegistrarModule,

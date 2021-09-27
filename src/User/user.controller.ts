@@ -25,7 +25,7 @@ import { ApiResponseDTO } from 'src/Common/common.dto';
 import { OktaGuard } from 'src/Guard/okta.guard';
 import { HttpExceptionFilter } from 'src/Filter/exception.filter';
 import { FacilityGuard } from 'src/Guard/facility-access.guard';
-import { UserGuard } from 'src/Guard/user.guard';
+import { AuthorizedGuard, UserGuard } from 'src/Guard/user.guard';
 import { CSVParser } from 'src/Helper/csv.helper';
 
 @Controller('user')
@@ -35,7 +35,7 @@ export class UserController {
   constructor(
     private readonly userService: UserService,
     private readonly csvParser: CSVParser,
-  ) {}
+  ) { }
 
   @Post()
   @UsePipes(new ValidationPipe({ transform: true }))
@@ -56,6 +56,7 @@ export class UserController {
   }
 
   @Get()
+  @UseGuards(AuthorizedGuard)
   async getAllUsers(@Res() res, @Query() query) {
     const page = parseInt(query?.page ?? 1);
     const limit = parseInt(query?.limit ?? 10);

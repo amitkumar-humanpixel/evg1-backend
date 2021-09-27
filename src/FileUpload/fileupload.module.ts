@@ -1,5 +1,5 @@
 import { Module, forwardRef } from '@nestjs/common';
-import { FileUploadController } from './fileupload.controller';
+import { FileDownloaderController, FileUploadController } from './fileupload.controller';
 import { FileServise } from 'src/FileUpload/fileupload.service';
 import { FormAModule } from 'src/FormA/formA.module';
 import { FormA1Module } from 'src/FormA1/formA1.module';
@@ -10,4 +10,9 @@ import { FormA1Module } from 'src/FormA1/formA1.module';
   providers: [FileServise],
   exports: [FileServise],
 })
-export class FileUploadModule {}
+export class FileUploadModule { }
+
+@Module({
+  controllers: [FileDownloaderController],
+})
+export class FileDownloaderModule { }

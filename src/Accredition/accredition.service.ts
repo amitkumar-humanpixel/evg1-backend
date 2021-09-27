@@ -78,6 +78,21 @@ export class AccreditionService {
     return await this.accreditionDAL.getAccreditionById(accreditionId);
   }
 
+  async deleteFormA1RelatedDetails(accreditionId: ObjectId, userId: number) {
+    const accredition = await this.accreditionDAL.getAccreditionById(
+      accreditionId,
+    );
+
+    accredition.formA1 = accredition.formA1.filter(
+      (x) => x.userId !== userId.toString(),
+    );
+
+    await this.accreditionDAL.updateAccreditionById(
+      accredition._id,
+      accredition,
+    );
+  }
+
   async createAccreditionByFacility(
     facility: IFacility,
     practiceManagerIds: number[],
@@ -130,6 +145,7 @@ export class AccreditionService {
   ): Promise<AccreditionDTO> {
     const user = await this.userService.getUserByUserId(userId);
     const accredition = await this.accreditionDAL.getAccreditionDetailsById(id);
+    console.log(accredition.isAddressRecommendation);
     if (user === null) {
       throw new BadRequestException('User does not exist!');
     }
@@ -158,7 +174,7 @@ export class AccreditionService {
             ? accredition.isFormA1Complete
               ? accredition.isFormBComplete
                 ? false
-                : true
+                : false
               : true
             : isEditable
           : isEditable;
@@ -188,7 +204,7 @@ export class AccreditionService {
                   'accreditation_support_coordinator' ||
                   user.role.toLowerCase() === 'practice_manager' ||
                   user.role.toLowerCase() === 'principal_supervisor'
-                  ? accredition.isFormA1Complete
+                  ? accredition.isFormA1Complete && accredition.isFormAComplete
                     ? false
                     : true
                   : isEditable
@@ -201,7 +217,7 @@ export class AccreditionService {
                   'accreditation_support_coordinator' ||
                   user.role.toLowerCase() === 'practice_manager' ||
                   user.role.toLowerCase() === 'principal_supervisor'
-                  ? accredition.isFormA1Complete
+                  ? accredition.isFormA1Complete && accredition.isFormAComplete
                     ? false
                     : true
                   : isEditable
@@ -220,7 +236,7 @@ export class AccreditionService {
                 'accreditation_support_coordinator' ||
                 user.role.toLowerCase() === 'practice_manager' ||
                 user.role.toLowerCase() === 'principal_supervisor'
-                ? accredition.isFormA1Complete
+                ? accredition.isFormA1Complete && accredition.isFormAComplete
                   ? false
                   : true
                 : isEditable
@@ -284,6 +300,10 @@ export class AccreditionService {
             obj.addSubSteps(form);
           }
         }
+        if (accredition.formA1.length === 0) {
+          obj = new AccreditionSideBarDTO();
+          obj.addDetails('Form A1', false);
+        }
 
         arrSideBar.push(obj);
         obj = new AccreditionSideBarDTO();
@@ -294,11 +314,17 @@ export class AccreditionService {
         obj.isEditable = isEditable
           ? user.role.toLowerCase() === 'super_admin' ||
             user.role.toLowerCase() === 'accreditation_support_coordinator'
-            ? true
+            ? accredition.isAddressRecommendation
+              ? !accredition.isFormBComplete
+                ? true
+                : false
+              : true
             : user.role.toLowerCase() === 'practice_manager' ||
               user.role.toLowerCase() === 'principal_supervisor'
-              ? accredition.isFormA1Complete
-                ? false
+              ? accredition.isFormA1Complete && accredition.isFormAComplete
+                ? !accredition.isAddressRecommendation
+                  ? true
+                  : false
                 : true
               : isEditable
           : isEditable;
@@ -633,12 +659,18 @@ export class AccreditionService {
 
   async completeFormASteps(id: ObjectId, stepName: string) {
     const accredition = await this.accreditionDAL.getAccreditionById(id);
-
+    accredition.status = 'PENDING';
     accredition.formA.map((o) => {
       if (o.stepName === stepName) {
         o.isComplete = true;
       }
     });
+
+    const completeAll = accredition.formA.every((x) => x.isComplete === true);
+
+    if (completeAll && accredition.isFormA1Complete) {
+      accredition.status = 'REVIEW';
+    }
 
     await this.accreditionDAL.updateAccreditionById(
       accredition._id,

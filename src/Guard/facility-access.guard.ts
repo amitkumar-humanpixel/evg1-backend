@@ -5,6 +5,7 @@ import {
   Inject,
   forwardRef,
   UnauthorizedException,
+  BadRequestException,
 } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { UserService } from 'src/User/user.service';
@@ -35,16 +36,21 @@ export class FacilityGuard implements CanActivate {
             ) {
               return true;
             } else {
-              return false;
+              console.log('in');
+              throw new BadRequestException(
+                'You are not allowed to access this resource!!!',
+              );
             }
           } else {
             return false;
           }
         })
         .catch(() => {
-          return false;
+          throw new BadRequestException(
+            'You are not allowed to access this resource!!!',
+          );
         });
     }
-    return true;
+    return false;
   }
 }

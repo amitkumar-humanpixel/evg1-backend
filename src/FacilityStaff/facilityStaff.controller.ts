@@ -26,15 +26,17 @@ import { OktaGuard } from 'src/Guard/okta.guard';
 import { ParseObjectIdPipe } from 'src/Pipe/objectId.pipe';
 import { HttpExceptionFilter } from 'src/Filter/exception.filter';
 import { CSVParser } from 'src/Helper/csv.helper';
+import { FacilityGuard } from 'src/Guard/facility-access.guard';
 
 @Controller('facility-staff')
+@UseGuards(FacilityGuard)
 @UseGuards(OktaGuard)
 @UseFilters(new HttpExceptionFilter())
 export class FacilityStaffController {
   constructor(
     private readonly facilityStaffService: FacilityStaffService,
     private readonly csvParser: CSVParser,
-  ) {}
+  ) { }
 
   @Post()
   @UsePipes(new ValidationPipe({ transform: true }))
