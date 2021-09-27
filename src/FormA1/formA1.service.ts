@@ -307,6 +307,7 @@ export class FormA1Service {
       await this.accreditionService.getAccreditionByAccreditionId(id);
     accredition.status = 'INCOMPLETE';
     accredition.isFormAComplete = false;
+    accredition.isAddressRecommendation = false;
 
     accredition.formA.map((x) => (x.isComplete = false));
 

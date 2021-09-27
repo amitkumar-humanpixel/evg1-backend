@@ -532,6 +532,10 @@ export class FormAService {
 
     if (objFormA !== null) {
       await this.formADAL.deleteSupervisor(accreditionId, userId);
+      await this.accreditionService.deleteFormA1RelatedDetails(
+        accreditionId,
+        userId,
+      );
     }
 
     if (objFormA1 !== null) {

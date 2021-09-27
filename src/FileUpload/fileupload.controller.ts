@@ -58,6 +58,7 @@ export class FileUploadController {
 
   @Get(':imgpath')
   seeUploadedFile(@Param('imgpath') image, @Res() res) {
+    res.setHeader('Content-Disposition', 'attachment; filename=' + image);
     return res.sendFile(image, { root: './Files' });
   }
 
@@ -75,5 +76,15 @@ export class FileUploadController {
       status: 'SUCCESS',
       message: 'Delete successfully.',
     });
+  }
+}
+
+@Controller('fileDownloader')
+@UseFilters(new HttpExceptionFilter())
+export class FileDownloaderController {
+  @Get(':imgpath')
+  seeUploadedFile(@Param('imgpath') image, @Res() res) {
+    res.setHeader('Content-Disposition', 'attachment; filename=' + image);
+    return res.sendFile(image, { root: './Files' });
   }
 }

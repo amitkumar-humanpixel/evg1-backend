@@ -8,7 +8,7 @@ async function bootstrap() {
     logger: console,
     cors: true,
   });
-  app.enableCors();
+  app.enableCors({ exposedHeaders: ['Content-Disposition'] });
   app.use(morgan('dev'));
   app.useGlobalPipes(
     new ValidationPipe({
