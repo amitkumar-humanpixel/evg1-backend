@@ -6,6 +6,7 @@ import {
   forwardRef,
   BadRequestException,
   UnauthorizedException,
+  ForbiddenException
 } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { UserService } from 'src/User/user.service';
@@ -66,7 +67,7 @@ export class AuthorizedGuard implements CanActivate {
               return true;
             } else {
               console.log('in');
-              throw new BadRequestException(
+              throw new ForbiddenException(
                 'You are not allowed to access this resource!!!',
               );
             }
@@ -75,7 +76,7 @@ export class AuthorizedGuard implements CanActivate {
           }
         })
         .catch(() => {
-          throw new BadRequestException(
+          throw new ForbiddenException(
             'You are not allowed to access this resource!!!',
           );
         });
