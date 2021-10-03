@@ -254,10 +254,17 @@ export class FormA1Service {
         const app = new applicationsDTO();
         const element = objFormA1.supervisorDetails[index];
         app.supervisorId = element.userId;
-        if (accredition.college === 'RACGP') {
-          app.RACGP = 'true';
-        } else {
-          app.ACRRM = 'true';
+        
+        if(Array.isArray(accredition.college) && accredition.college?.length > 0){
+          accredition.college.forEach(element => {
+            if(element == 'RACGP'){
+              app.RACGP = 'true';
+            }
+
+            if(element == 'ACRRM'){
+              app.ACRRM = 'true';
+            }
+          });
         }
         objFormB.applications.push(app);
       }

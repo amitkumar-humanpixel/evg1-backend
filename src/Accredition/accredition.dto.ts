@@ -14,7 +14,7 @@ export class PostDetailAddDTO {
   totalNumberGPs: string;
   practiceWebsite: string;
   @IsNotEmpty({ message: 'College should not be empty' })
-  college: college;
+  college: Array<college>;
   @IsNotEmpty({ message: 'Accreditation Body should not be empty' })
   accreditationBody: Array<accreditionBody>;
   @IsNotEmpty({ message: 'Accreditation End Date should not be empty' })

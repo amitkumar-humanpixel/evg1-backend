@@ -14,7 +14,7 @@ export interface IAccredition extends Document {
   address: string;
   phone: string;
   practiceWebsite: string;
-  college: string;
+  college: Array<string>;
   AccreditationBody: Array<string>;
   AccreditationEndDate: Date;
   formA: Array<StepDetails>;

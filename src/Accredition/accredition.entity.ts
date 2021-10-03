@@ -8,7 +8,7 @@ export const AccreditionSchema = new mongoose.Schema(
     totalNumberGPs: { type: String },
     practiceWebsite: { type: String },
     college: {
-      type: String,
+      type: [String],
       enum: ['RACGP', 'ACRRM'],
     },
     accreditationBody: {
