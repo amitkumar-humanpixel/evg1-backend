@@ -118,6 +118,7 @@ export class DashboardService {
         dashboardData.accreditionId = obj._id;
         dashboardData.facilityId = obj.facilityId;
         dashboardData.createdAt = obj.createdAt;
+        dashboardData.endDate = obj.facility.dueDate;
         dashboardData.status =
           currentStatus === 'INCOMPLETE'
             ? currentStatus
@@ -218,7 +219,7 @@ export class DashboardService {
               })
               .replace(/([a-z])([A-Z])/g, '$1 $2')
               .replace(/([A-Z])([A-Z][a-z])/g, '$1 $2');
-            if (key.toLowerCase().includes('createdat')) {
+            if (key.toLowerCase().includes('createdat') || key.toLocaleLowerCase().includes('enddate')) {
               header.type = 'date';
             } else {
               header.type = 'string';

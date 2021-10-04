@@ -93,7 +93,6 @@ export class checkListDTO {
 }
 
 export class finalCheckListDetailsDTO {
-  @IsNotEmpty({ message: 'List Recommendation should not be empty' })
   recommendation: string;
   @IsNotEmpty({ message: 'Actioned should not be empty' })
   actioned: string;

@@ -12,6 +12,7 @@ export class DashboardResult {
   status: string;
   createdAt: Date;
   practiceName: string;
+  endDate: Date;
   formType: string;
 }
 
