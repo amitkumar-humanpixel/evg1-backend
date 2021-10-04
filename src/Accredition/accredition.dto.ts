@@ -101,6 +101,7 @@ export class AccreditionDTO {
 }
 
 export class AccreditionSideBarDTO {
+  private displayName: string;
   private name: string;
   private complete: boolean;
   isEditable = true;
@@ -110,8 +111,9 @@ export class AccreditionSideBarDTO {
     this.subSteps = [];
   }
 
-  addDetails(stepname: string, complete: boolean) {
+  addDetails(stepname: string, complete: boolean, displayName: string = null) {
     this.name = stepname;
+    this.displayName = displayName;
     this.complete = complete;
   }
 

@@ -197,7 +197,7 @@ export class AccreditionService {
           if (i == 0) {
             obj = new AccreditionSideBarDTO();
             if (accredition.formA.some((x) => x.isComplete == false)) {
-              obj.addDetails('Form A', false);
+              obj.addDetails('Form A', false, "Clinical Section");
               obj.isEditable = isEditable
                 ? user.role.toLowerCase() === 'super_admin' ||
                   user.role.toLowerCase() ===
@@ -210,7 +210,7 @@ export class AccreditionService {
                   : isEditable
                 : isEditable;
             } else {
-              obj.addDetails('Form A', true);
+              obj.addDetails('Form A', true, "Clinical Section");
               obj.isEditable = isEditable
                 ? user.role.toLowerCase() === 'super_admin' ||
                   user.role.toLowerCase() ===
@@ -258,7 +258,7 @@ export class AccreditionService {
           isAdd[0].userId,
         );
         obj = new AccreditionSideBarDTO();
-        obj.addDetails('Form A1', isAdd[0]?.isComplete ?? false);
+        obj.addDetails('Form A1', isAdd[0]?.isComplete ?? false, "Supervisor Section");
         obj.isEditable = isEditable
           ? accredition.isFormA1Complete
             ? false
@@ -302,7 +302,7 @@ export class AccreditionService {
         }
         if (accredition.formA1.length === 0) {
           obj = new AccreditionSideBarDTO();
-          obj.addDetails('Form A1', false);
+          obj.addDetails('Form A1', false, "Supervisor Section");
         }
 
         arrSideBar.push(obj);
@@ -340,9 +340,9 @@ export class AccreditionService {
           if (i == 0) {
             obj = new AccreditionSideBarDTO();
             if (accredition.formB.some((x) => x.isComplete === false)) {
-              obj.addDetails('Form B', false);
+              obj.addDetails('Form B', false, "Accreditor Section");
             } else {
-              obj.addDetails('Form B', true);
+              obj.addDetails('Form B', true, "Accreditor Section");
             }
           }
 
