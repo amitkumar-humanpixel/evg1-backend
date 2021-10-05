@@ -165,6 +165,7 @@ export class AccreditionService {
         obj.addDetails(
           'Reaccreditation Checklist',
           accredition.isReaccreditationChecklistComplete,
+          "Application Instructions",
         );
         obj.isEditable = isEditable
           ? user.role.toLowerCase() === 'super_admin' ||
@@ -197,7 +198,7 @@ export class AccreditionService {
           if (i == 0) {
             obj = new AccreditionSideBarDTO();
             if (accredition.formA.some((x) => x.isComplete == false)) {
-              obj.addDetails('Form A', false, "Clinical Section");
+              obj.addDetails('Form A', false, "Practice Manager Information");
               obj.isEditable = isEditable
                 ? user.role.toLowerCase() === 'super_admin' ||
                   user.role.toLowerCase() ===
@@ -210,7 +211,7 @@ export class AccreditionService {
                   : isEditable
                 : isEditable;
             } else {
-              obj.addDetails('Form A', true, "Clinical Section");
+              obj.addDetails('Form A', true, "Practice Manager Information");
               obj.isEditable = isEditable
                 ? user.role.toLowerCase() === 'super_admin' ||
                   user.role.toLowerCase() ===
@@ -242,6 +243,22 @@ export class AccreditionService {
                 : isEditable
               : isEditable,
           );
+          if(element.stepName == "Practice Manager"){
+            form.displayName = "Practice Details";
+          }
+
+          if(element.stepName === "Standards"){
+            form.displayName = "Training Standards";
+          }
+
+          if(element.stepName === "Supervisor"){
+            form.displayName = "Supervisor Details and Roster";
+          }
+
+          if(element.stepName === "Registrar"){
+            form.displayName = "Registrar Details and Roster";
+          }
+
           obj.addSubSteps(form);
         }
         arrSideBar.push(obj);
@@ -258,7 +275,7 @@ export class AccreditionService {
           isAdd[0].userId,
         );
         obj = new AccreditionSideBarDTO();
-        obj.addDetails('Form A1', isAdd[0]?.isComplete ?? false, "Supervisor Section");
+        obj.addDetails('Form A1', isAdd[0]?.isComplete ?? false, "Supervisor Information");
         obj.isEditable = isEditable
           ? accredition.isFormA1Complete
             ? false
@@ -277,11 +294,11 @@ export class AccreditionService {
           if (i == 0) {
             obj = new AccreditionSideBarDTO();
             if (accredition.formA1.some((x) => x.isComplete === false)) {
-              obj.addDetails('Form A1', false);
+              obj.addDetails('Form A1', false,  "Supervisor Information");
               obj.isEditable =
                 accredition.formA1[i].userId === user.userId ? true : false;
             } else {
-              obj.addDetails('Form A1', true);
+              obj.addDetails('Form A1', true,  "Supervisor Information");
               obj.isEditable =
                 accredition.formA1[i].userId === user.userId ? true : false;
             }
@@ -302,7 +319,7 @@ export class AccreditionService {
         }
         if (accredition.formA1.length === 0) {
           obj = new AccreditionSideBarDTO();
-          obj.addDetails('Form A1', false, "Supervisor Section");
+          obj.addDetails('Form A1', false, "Supervisor Information");
         }
 
         arrSideBar.push(obj);
@@ -310,6 +327,7 @@ export class AccreditionService {
         obj.addDetails(
           'Previous Recommendations',
           accredition.isAddressRecommendation,
+          "Final Application Submission",
         );
         obj.isEditable = isEditable
           ? user.role.toLowerCase() === 'super_admin' ||

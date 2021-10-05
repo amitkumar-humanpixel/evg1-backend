@@ -155,6 +155,7 @@ export class formClass {
 
 export class SideBarDataDTO {
   stepName: string;
+  displayName: string;
   isComplete: boolean;
   userId: string;
   isEditable: boolean;
