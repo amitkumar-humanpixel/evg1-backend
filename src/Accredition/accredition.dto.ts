@@ -59,6 +59,9 @@ export enum college {
 export enum accreditionBody {
   'AGPAL' = 'AGPAL',
   'QPA' = 'QPA',
+  'Global-Mark' = 'Global-Mark',
+  'ACHS' = 'ACHS',
+  'IHCA' = 'IHCA'
 }
 
 export enum status {
