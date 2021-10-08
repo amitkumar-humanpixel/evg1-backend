@@ -318,7 +318,11 @@ export class AccreditionService {
             const form = new SideBarDataDTO(
               element.stepName,
               element.isComplete,
-              accredition.formA1[i].userId == user.userId ? true : false,
+              accredition.formA1[i].userId == user.userId
+                ? accredition.formA1[i].isComplete
+                  ? false
+                  : true
+                : false,
               element.userId,
             );
             obj.addSubSteps(form);
@@ -426,6 +430,12 @@ export class AccreditionService {
     ) {
       if (accredition.isFormA1Complete && accredition.isFormAComplete) {
         if (!accredition.isAddressRecommendation) {
+          return true;
+        } else {
+          return false;
+        }
+      } else if (!accredition.isFormA1Complete) {
+        if (accredition.formA1.every((x) => x.isComplete === true)) {
           return true;
         } else {
           return false;
