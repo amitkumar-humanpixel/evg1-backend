@@ -37,6 +37,7 @@ export const FormBSchema = new mongoose.Schema(
     recomendationPanel: { type: String },
     reviewedBy: { type: String },
     isAgree: { type: Boolean },
+    isUserNotify: { type: Boolean, default: false },
   },
   { timestamps: true },
 );

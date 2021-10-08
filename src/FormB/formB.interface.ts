@@ -30,4 +30,5 @@ export interface IFormB extends Document {
   previousIssues: string;
   reviewedBy: string;
   isAgree: boolean;
+  isUserNotify: boolean;
 }

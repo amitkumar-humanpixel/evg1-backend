@@ -157,6 +157,9 @@ export class FormBService {
       formB.accreditionId as ObjectId,
       'Summary',
     );
+    await this.accreditionService.completeAllFormB(
+      formB.accreditionId as ObjectId,
+    );
   }
 
   async submitOtherDetails(
@@ -170,14 +173,53 @@ export class FormBService {
     formB.reviewedBy = otherDetails.reviewedBy;
     formB.isAgree = otherDetails.isAgree;
     formB.isCompleted = true;
+
     await this.formBDAL.updateFormB(formB._id, formB);
     await this.accreditionService.completeFormBSteps(
       formB.accreditionId as ObjectId,
       'Declaration',
     );
+    await this.accreditionService.completeAllFormB(
+      formB.accreditionId as ObjectId,
+    );
     await this.accreditionService.completeFormB(
       formB.accreditionId as ObjectId,
     );
+
+    if (!formB.isUserNotify) {
+      const users = await this.userService.getSuperAdmins();
+      const ascUsers = await this.userService.getASCUsers();
+
+      await this.sentMail(users, formB.accreditionId as ObjectId);
+      await this.sentMail(ascUsers, formB.accreditionId as ObjectId);
+      formB.isUserNotify = true;
+    }
+    await this.formBDAL.updateFormB(formB._id, formB);
+  }
+
+  async sentMail(users: any, accreditionId: ObjectId) {
+    for (let index = 0; index < users.length; index++) {
+      const element = users[index];
+      const userDetails = await this.userService.getUserByUserId(
+        element.userId,
+      );
+      const practiceDetails = await this.accreditionService.getAccreditionById(
+        accreditionId,
+      );
+
+      const link =
+        process.env.BASE_URL +
+        process.env.FORM_COMPLETE_PARTB +
+        `?id=${accreditionId}`;
+      mailSender(
+        userDetails.email,
+        userDetails.firstName,
+        userDetails.lastName,
+        practiceDetails.facilityName,
+        'Complete All Forms',
+        link,
+      );
+    }
   }
 
   async getSummary(id: ObjectId): Promise<SummaryDataDTO> {
