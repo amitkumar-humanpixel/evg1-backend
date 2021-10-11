@@ -21,6 +21,7 @@ import { finalCheckListDetailsDTO, SupervisorDetailsDTOA1 } from './formA1.dto';
 import { FormA1Service } from './formA1.service';
 import { FormA1Guard } from 'src/Guard/formA1.guard';
 import { OktaGuard } from 'src/Guard/okta.guard';
+import { ValidationError } from 'src/Common/validation.error';
 
 @Controller('formA1')
 @UseGuards(FormA1Guard)
@@ -176,9 +177,19 @@ export class FormA1Controller {
         .json(ApiResponseDTO.setResponse('SUCCESS', 'Updated Successfully.'));
     } catch (error: any) {
       console.log(error);
-      return res
+
+      //Validation Failed Error Handling.
+      if(error instanceof ValidationError){
+        let valError = error as ValidationError;
+        return res
         .status(HttpStatus.BAD_REQUEST)
-        .json(ApiResponseDTO.setResponse('ERROR', error['message']));
+        .json(ApiResponseDTO.setResponse(valError.name, valError.validation));
+      }
+
+      //Default Error Handling
+      return res
+      .status(HttpStatus.BAD_REQUEST)
+      .json(ApiResponseDTO.setResponse('ERROR', error['message']));
     }
   }
 

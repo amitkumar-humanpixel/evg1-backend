@@ -30,6 +30,7 @@ import {
 import { mailSender } from 'src/Listeners/mail.listener';
 import { UserService } from 'src/User/user.service';
 import { SupervisorTempDetailService } from 'src/SupervisorTempDetails/supervisorTempDetails.service';
+import { FormAValidator } from './formA.validation';
 @Injectable()
 export class FormAService {
   constructor(
@@ -556,5 +557,24 @@ export class FormAService {
 
   async deleteFileUpload(id: ObjectId, path: string) {
     this.formADAL.deleteFileUpload(id, path);
+  }
+
+  //Validates Form A using the FormA Validator
+  async validateFormA(id: ObjectId): Promise<string[]> {
+    let validationErrors : string[] = [];
+    let form = await this.formADAL.getFormAById(id);
+
+    if(form == null){
+      throw new Error("Unable to Locate Accreditation by provided Id");
+    }
+
+    let validator = new FormAValidator(form);
+    let standardsValidationErrors = validator.validateStandards();
+
+    if(standardsValidationErrors.length > 0){
+      validationErrors.push("Training Standards are Incomplete.")
+    }
+    
+    return validationErrors;
   }
 }

@@ -16,6 +16,7 @@ import { IFormA1 } from './formA1.interface';
 import { mailSender } from 'src/Listeners/mail.listener';
 import { UserService } from 'src/User/user.service';
 import { SupervisorTempDetailService } from 'src/SupervisorTempDetails/supervisorTempDetails.service';
+import { ValidationError } from 'src/Common/validation.error';
 @Injectable()
 export class FormA1Service {
   constructor(
@@ -225,87 +226,95 @@ export class FormA1Service {
 
     await this.formA1DAL.updateFormA1(objFormA1._id, objFormA1);
 
-    await this.accreditionService.completeFormA1(
-      objFormA1.accreditionId as ObjectId,
-    );
+    let validationErrorResults = await this.formAService.validateFormA(objFormA1.formAId as ObjectId);
 
-    // await this.accreditionService.completeFinalCheckList(
-    //   objFormA1.accreditionId as ObjectId,
-    //   'Final CheckList',
-    // );
-    await this.accreditionService.completeAddressRecommendation(
-      objFormA1.accreditionId as ObjectId,
-    );
-    const formB = await this.formBService.getFormBByAccreditionId(
-      objFormA1.accreditionId as ObjectId,
-    );
-    if (formB == null) {
-      const objFormB = new FormBDTO();
-      objFormB.addFormB(
-        objFormA1.accreditionId as ObjectId,
-        objFormA1.formAId as ObjectId,
-        objFormA1._id as ObjectId,
-      );
-      objFormB.applications = [];
-      const accredition = await this.accreditionService.getAccreditionById(
+    if(validationErrorResults.length > 0){
+      //So, we want to form an exception here that contains all the relevent data as needed for validation failure.
+      var ex = new ValidationError("Validation of FormA Failed.", validationErrorResults);
+      throw ex;
+    }else{
+      await this.accreditionService.completeFormA1(
         objFormA1.accreditionId as ObjectId,
       );
-      for (let index = 0; index < objFormA1.supervisorDetails.length; index++) {
-        const app = new applicationsDTO();
-        const element = objFormA1.supervisorDetails[index];
-        app.supervisorId = element.userId;
-        
-        if(Array.isArray(accredition.college) && accredition.college?.length > 0){
-          accredition.college.forEach(element => {
-            if(element == 'RACGP'){
-              app.RACGP = 'true';
-            }
-
-            if(element == 'ACRRM'){
-              app.ACRRM = 'true';
-            }
-          });
-        }
-        objFormB.applications.push(app);
-      }
-      await this.formBService.addFormB(objFormB);
-    }
-    if (!objFormA1.isNotify) {
-      let isNotify = false;
-      // need to check code
-      const users = await this.userService.getASCData();
-      const practiceDetails = await this.accreditionService.getAccreditionById(
+  
+      // await this.accreditionService.completeFinalCheckList(
+      //   objFormA1.accreditionId as ObjectId,
+      //   'Final CheckList',
+      // );
+      await this.accreditionService.completeAddressRecommendation(
         objFormA1.accreditionId as ObjectId,
       );
-      // const accreditationSupportCoordinatorData =
-      //   await this.accreditionService.getAccreditationSupportCoordinatorData(
-      //     accreditionId,
-      //   );
-
-      // const accreditationSupportCoordinatorDetails =
-      //   accreditationSupportCoordinatorData.filter((data) => {
-      //     return (
-      //       data.userDetails.role.toLowerCase() ===
-      //       'accreditation_support_coordinator'
-      //     );
-      //   });
-      for (let i = 0; i < users.length; i++) {
-        const link =
-          process.env.BASE_URL +
-          process.env.FORM_SUBMIT +
-          `?id=${accreditionId}`;
-        mailSender(
-          users[i].email,
-          users[i].firstName,
-          users[i].lastName,
-          practiceDetails.facilityName,
-          'Form Submitted',
-          link,
+      const formB = await this.formBService.getFormBByAccreditionId(
+        objFormA1.accreditionId as ObjectId,
+      );
+      if (formB == null) {
+        const objFormB = new FormBDTO();
+        objFormB.addFormB(
+          objFormA1.accreditionId as ObjectId,
+          objFormA1.formAId as ObjectId,
+          objFormA1._id as ObjectId,
         );
-        isNotify = true;
+        objFormB.applications = [];
+        const accredition = await this.accreditionService.getAccreditionById(
+          objFormA1.accreditionId as ObjectId,
+        );
+        for (let index = 0; index < objFormA1.supervisorDetails.length; index++) {
+          const app = new applicationsDTO();
+          const element = objFormA1.supervisorDetails[index];
+          app.supervisorId = element.userId;
+          
+          if(Array.isArray(accredition.college) && accredition.college?.length > 0){
+            accredition.college.forEach(element => {
+              if(element == 'RACGP'){
+                app.RACGP = 'true';
+              }
+  
+              if(element == 'ACRRM'){
+                app.ACRRM = 'true';
+              }
+            });
+          }
+          objFormB.applications.push(app);
+        }
+        await this.formBService.addFormB(objFormB);
       }
-      objFormA1.isNotify = isNotify;
-      await this.formA1DAL.updateFormA1(objFormA1._id, objFormA1);
+      if (!objFormA1.isNotify) {
+        let isNotify = false;
+        // need to check code
+        const users = await this.userService.getASCData();
+        const practiceDetails = await this.accreditionService.getAccreditionById(
+          objFormA1.accreditionId as ObjectId,
+        );
+        // const accreditationSupportCoordinatorData =
+        //   await this.accreditionService.getAccreditationSupportCoordinatorData(
+        //     accreditionId,
+        //   );
+  
+        // const accreditationSupportCoordinatorDetails =
+        //   accreditationSupportCoordinatorData.filter((data) => {
+        //     return (
+        //       data.userDetails.role.toLowerCase() ===
+        //       'accreditation_support_coordinator'
+        //     );
+        //   });
+        for (let i = 0; i < users.length; i++) {
+          const link =
+            process.env.BASE_URL +
+            process.env.FORM_SUBMIT +
+            `?id=${accreditionId}`;
+          mailSender(
+            users[i].email,
+            users[i].firstName,
+            users[i].lastName,
+            practiceDetails.facilityName,
+            'Form Submitted',
+            link,
+          );
+          isNotify = true;
+        }
+        objFormA1.isNotify = isNotify;
+        await this.formA1DAL.updateFormA1(objFormA1._id, objFormA1);
+      }
     }
   }
 
