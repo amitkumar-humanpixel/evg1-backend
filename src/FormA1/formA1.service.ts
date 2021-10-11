@@ -220,9 +220,8 @@ export class FormA1Service {
 
     // objFormA1.finalCheckList = finalCheckListDetails.finalCheckLists;
     objFormA1.addressRecommendation.actioned = finalCheckListDetails.actioned;
-    objFormA1.addressRecommendation.recommendation =
-      finalCheckListDetails.recommendation;
-    objFormA1.status = FormStatus['Complete'];
+    objFormA1.addressRecommendation.recommendation =finalCheckListDetails.recommendation;
+    objFormA1.status = FormStatus['Pending'];
 
     await this.formA1DAL.updateFormA1(objFormA1._id, objFormA1);
 
@@ -233,6 +232,9 @@ export class FormA1Service {
       var ex = new ValidationError("Validation of FormA Failed.", validationErrorResults);
       throw ex;
     }else{
+      objFormA1.status = FormStatus['Complete'];
+      await this.formA1DAL.updateFormA1(objFormA1._id, objFormA1);
+
       await this.accreditionService.completeFormA1(
         objFormA1.accreditionId as ObjectId,
       );

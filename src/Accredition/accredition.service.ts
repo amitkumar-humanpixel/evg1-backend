@@ -389,9 +389,10 @@ export class AccreditionService {
 
   async getFinalApplicationSubmission(user: any, accredition: any) {
     console.log(accredition);
-    if (!accredition.isFormAComplete) {
-      return false;
-    } else if (
+    //if (!accredition.isFormAComplete) {
+//      return false;
+    //} else 
+    if (
       user.role.toLowerCase() === 'super_admin' ||
       user.role.toLowerCase() === 'accreditation_support_coordinator'
     ) {
@@ -444,6 +445,8 @@ export class AccreditionService {
         return true;
       }
     }
+
+    return false;
   }
 
   async getAccreditionDetailByUserId(

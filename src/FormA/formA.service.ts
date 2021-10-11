@@ -271,13 +271,18 @@ export class FormAService {
 
     objFormA.practiceStandards = practiceStandards;
     await this.formADAL.updateFormA(objFormA._id, objFormA);
-    await this.accreditionService.completeFormASteps(
-      objFormA.accreditionId as ObjectId,
-      'Standards',
-    );
-    await this.accreditionService.completeFormA(
-      objFormA.accreditionId as ObjectId,
-    );
+
+    //validate against standards, if valid, mark as completed, otherwise leave as incomplete to block progression into Review Mode.
+    let validator = new FormAValidator(objFormA);
+    if(validator.validateStandards()?.length == 0){
+      await this.accreditionService.completeFormASteps(
+        objFormA.accreditionId as ObjectId,
+        'Standards',
+      );
+      await this.accreditionService.completeFormA(
+        objFormA.accreditionId as ObjectId,
+      );
+    }
   }
 
   async submitSupervisors(
