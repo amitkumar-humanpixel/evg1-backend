@@ -17,6 +17,12 @@ export class FormADAL {
     return newFormA.id;
   }
 
+  async addAndGetFormA(formA: FormADTO): Promise<IFormA> {
+    const newFormA = new this.formAModel(formA);
+    await newFormA.save();
+    return newFormA;
+  }
+
   async getFormAById(id: ObjectId): Promise<IFormA> {
     return await this.formAModel.findById(id);
   }

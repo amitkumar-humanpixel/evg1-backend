@@ -47,7 +47,7 @@ export class AccreditionService {
     const accreditionId = await this.accreditionDAL.updateAccreditionChecklist(
       details,
     );
-    await this.formAService.addNewFormA(accreditionId);
+    await this.formAService.addOrGetFormA(accreditionId);
     return accreditionId;
   }
 
@@ -136,7 +136,11 @@ export class AccreditionService {
     objAccredition.formB.push(new formClass('Summary', false));
     objAccredition.formB.push(new formClass('Declaration', false));
 
-    return await this.accreditionDAL.createAccredition(objAccredition);
+    const accredition = await this.accreditionDAL.createAccredition(
+      objAccredition,
+    );
+    await this.formAService.addOrGetFormA(accredition._id);
+    return accredition;
   }
 
   async getAccreditionSideBar(
@@ -145,7 +149,6 @@ export class AccreditionService {
   ): Promise<AccreditionDTO> {
     const user = await this.userService.getUserByUserId(userId);
     const accredition = await this.accreditionDAL.getAccreditionDetailsById(id);
-    console.log(accredition.isAddressRecommendation);
     if (user === null) {
       throw new BadRequestException('User does not exist!');
     }
@@ -165,7 +168,7 @@ export class AccreditionService {
         obj.addDetails(
           'Reaccreditation Checklist',
           accredition.isReaccreditationChecklistComplete,
-          "Application Instructions",
+          'Application Instructions',
         );
         obj.isEditable = isEditable
           ? user.role.toLowerCase() === 'super_admin' ||
@@ -198,7 +201,7 @@ export class AccreditionService {
           if (i == 0) {
             obj = new AccreditionSideBarDTO();
             if (accredition.formA.some((x) => x.isComplete == false)) {
-              obj.addDetails('Form A', false, "Practice Manager Information");
+              obj.addDetails('Form A', false, 'Practice Manager Information');
               obj.isEditable = isEditable
                 ? user.role.toLowerCase() === 'super_admin' ||
                   user.role.toLowerCase() ===
@@ -211,7 +214,7 @@ export class AccreditionService {
                   : isEditable
                 : isEditable;
             } else {
-              obj.addDetails('Form A', true, "Practice Manager Information");
+              obj.addDetails('Form A', true, 'Practice Manager Information');
               obj.isEditable = isEditable
                 ? user.role.toLowerCase() === 'super_admin' ||
                   user.role.toLowerCase() ===
@@ -243,20 +246,20 @@ export class AccreditionService {
                 : isEditable
               : isEditable,
           );
-          if(element.stepName == "Practice Manager"){
-            form.displayName = "Practice Details";
+          if (element.stepName == 'Practice Manager') {
+            form.displayName = 'Practice Details';
           }
 
-          if(element.stepName === "Standards"){
-            form.displayName = "Training Standards";
+          if (element.stepName === 'Standards') {
+            form.displayName = 'Training Standards';
           }
 
-          if(element.stepName === "Supervisor"){
-            form.displayName = "Supervisor Details and Roster";
+          if (element.stepName === 'Supervisor') {
+            form.displayName = 'Supervisor Details and Roster';
           }
 
-          if(element.stepName === "Registrar"){
-            form.displayName = "Registrar Details and Roster";
+          if (element.stepName === 'Registrar') {
+            form.displayName = 'Registrar Details and Roster';
           }
 
           obj.addSubSteps(form);
@@ -275,7 +278,11 @@ export class AccreditionService {
           isAdd[0].userId,
         );
         obj = new AccreditionSideBarDTO();
-        obj.addDetails('Form A1', isAdd[0]?.isComplete ?? false, "Supervisor Information");
+        obj.addDetails(
+          'Form A1',
+          isAdd[0]?.isComplete ?? false,
+          'Supervisor Information',
+        );
         obj.isEditable = isEditable
           ? accredition.isFormA1Complete
             ? false
@@ -294,11 +301,11 @@ export class AccreditionService {
           if (i == 0) {
             obj = new AccreditionSideBarDTO();
             if (accredition.formA1.some((x) => x.isComplete === false)) {
-              obj.addDetails('Form A1', false,  "Supervisor Information");
+              obj.addDetails('Form A1', false, 'Supervisor Information');
               obj.isEditable =
                 accredition.formA1[i].userId === user.userId ? true : false;
             } else {
-              obj.addDetails('Form A1', true,  "Supervisor Information");
+              obj.addDetails('Form A1', true, 'Supervisor Information');
               obj.isEditable =
                 accredition.formA1[i].userId === user.userId ? true : false;
             }
@@ -311,7 +318,11 @@ export class AccreditionService {
             const form = new SideBarDataDTO(
               element.stepName,
               element.isComplete,
-              accredition.formA1[i].userId == user.userId ? true : false,
+              accredition.formA1[i].userId == user.userId
+                ? accredition.formA1[i].isComplete
+                  ? false
+                  : true
+                : false,
               element.userId,
             );
             obj.addSubSteps(form);
@@ -319,7 +330,7 @@ export class AccreditionService {
         }
         if (accredition.formA1.length === 0) {
           obj = new AccreditionSideBarDTO();
-          obj.addDetails('Form A1', false, "Supervisor Information");
+          obj.addDetails('Form A1', false, 'Supervisor Information');
         }
 
         arrSideBar.push(obj);
@@ -327,24 +338,10 @@ export class AccreditionService {
         obj.addDetails(
           'Previous Recommendations',
           accredition.isAddressRecommendation,
-          "Final Application Submission",
+          'Final Application Submission',
         );
         obj.isEditable = isEditable
-          ? user.role.toLowerCase() === 'super_admin' ||
-            user.role.toLowerCase() === 'accreditation_support_coordinator'
-            ? accredition.isAddressRecommendation
-              ? !accredition.isFormBComplete
-                ? true
-                : false
-              : true
-            : user.role.toLowerCase() === 'practice_manager' ||
-              user.role.toLowerCase() === 'principal_supervisor'
-              ? accredition.isFormA1Complete && accredition.isFormAComplete
-                ? !accredition.isAddressRecommendation
-                  ? true
-                  : false
-                : true
-              : isEditable
+          ? await this.getFinalApplicationSubmission(user, accredition)
           : isEditable;
         arrSideBar.push(obj);
       }
@@ -358,9 +355,9 @@ export class AccreditionService {
           if (i == 0) {
             obj = new AccreditionSideBarDTO();
             if (accredition.formB.some((x) => x.isComplete === false)) {
-              obj.addDetails('Form B', false, "Accreditor Section");
+              obj.addDetails('Form B', false, 'Accreditor Section');
             } else {
-              obj.addDetails('Form B', true, "Accreditor Section");
+              obj.addDetails('Form B', true, 'Accreditor Section');
             }
           }
 
@@ -374,7 +371,9 @@ export class AccreditionService {
           const form = new SideBarDataDTO(
             element.stepName,
             element.isComplete,
-            accredition.isFormBComplete ? false : true,
+            accredition.formB[i].isComplete && accredition.isFormBComplete
+              ? false
+              : true,
           );
           obj.addSubSteps(form);
         }
@@ -385,6 +384,65 @@ export class AccreditionService {
       return resAccredition;
     } else {
       throw new BadRequestException('Facility does not exist!');
+    }
+  }
+
+  async getFinalApplicationSubmission(user: any, accredition: any) {
+    console.log(accredition);
+    if (!accredition.isFormAComplete) {
+      return false;
+    } else if (
+      user.role.toLowerCase() === 'super_admin' ||
+      user.role.toLowerCase() === 'accreditation_support_coordinator'
+    ) {
+      if (accredition.isAddressRecommendation) {
+        if (!accredition.isFormBComplete) {
+          const assignAccreditor =
+            accredition?.formB.find(
+              (form) => form.stepName === 'Assign Accreditor',
+            ) ?? undefined;
+          if (assignAccreditor === undefined) {
+            return true;
+          } else if (assignAccreditor.isComplete) {
+            return false;
+          }
+          return true;
+        } else {
+          return false;
+        }
+      } else if (!accredition.isFormBComplete) {
+        if (!accredition.isFormAComplete) {
+          return false;
+        } else {
+          return true;
+        }
+      } else if (!accredition.isFormAComplete) {
+        return false;
+      } else {
+        if (accredition.isFormAComplete && accredition.isFormA1Complete) {
+          return false;
+        }
+        return true;
+      }
+    } else if (
+      user.role.toLowerCase() === 'practice_manager' ||
+      user.role.toLowerCase() === 'principal_supervisor'
+    ) {
+      if (accredition.isFormA1Complete && accredition.isFormAComplete) {
+        if (!accredition.isAddressRecommendation) {
+          return true;
+        } else {
+          return false;
+        }
+      } else if (!accredition.isFormA1Complete) {
+        if (accredition.formA1.every((x) => x.isComplete === true)) {
+          return true;
+        } else {
+          return false;
+        }
+      } else {
+        return true;
+      }
     }
   }
 
@@ -645,7 +703,12 @@ export class AccreditionService {
   async completeFormA(id: ObjectId) {
     const accredition = await this.accreditionDAL.getAccreditionById(id);
 
-    accredition.isFormAComplete = true;
+    const completeAll = accredition.formA.every((x) => x.isComplete === true);
+
+    if (completeAll) {
+      accredition.isFormAComplete = true;
+    }
+
     await this.accreditionDAL.updateAccreditionById(
       accredition._id,
       accredition,
@@ -655,7 +718,6 @@ export class AccreditionService {
   async completeFormA1(id: ObjectId) {
     const accredition = await this.accreditionDAL.getAccreditionById(id);
     accredition.status = 'REVIEW';
-    accredition.isFormAComplete = true;
     accredition.isFormA1Complete = true;
     await this.accreditionDAL.updateAccreditionById(
       accredition._id,
@@ -795,15 +857,25 @@ export class AccreditionService {
 
   async completeFormBSteps(id: ObjectId, stepName: string) {
     const accredition = await this.accreditionDAL.getAccreditionById(id);
-    if (stepName === 'Declaration') {
-      accredition.status = 'COMPLETE';
-    }
     accredition.formB.map((o) => {
       if (o.stepName === stepName) {
         o.isComplete = true;
       }
     });
 
+    await this.accreditionDAL.updateAccreditionById(
+      accredition._id,
+      accredition,
+    );
+  }
+
+  async completeAllFormB(id: ObjectId) {
+    const accredition = await this.accreditionDAL.getAccreditionById(id);
+    const allComplete = accredition.formB.every((x) => x.isComplete === true);
+
+    if (allComplete) {
+      accredition.status = 'COMPLETE';
+    }
     await this.accreditionDAL.updateAccreditionById(
       accredition._id,
       accredition,

@@ -47,7 +47,7 @@ export class FormAService {
     private readonly tempSupervisorDetail: SupervisorTempDetailService,
   ) { }
 
-  async addNewFormA(accreditionId: ObjectId) {
+  async addOrGetFormA(accreditionId: ObjectId) {
     const existingFormA = await this.formADAL.getFormAByAccreditionId(
       accreditionId,
     );
@@ -56,8 +56,9 @@ export class FormAService {
 
       objFormA.addNewFormA(accreditionId);
 
-      await this.formADAL.addFormA(objFormA);
+      return await this.formADAL.addAndGetFormA(objFormA);
     }
+    return existingFormA;
   }
 
   async getPracticeManagers(
@@ -240,6 +241,9 @@ export class FormAService {
         objFormA.accreditionId as ObjectId,
         'Practice Manager',
       );
+      await this.accreditionService.completeFormA(
+        objFormA.accreditionId as ObjectId,
+      );
       return response;
     } else {
       existingFormA.practiceManagerDetail = objPracticeManager;
@@ -247,6 +251,9 @@ export class FormAService {
       await this.accreditionService.completeFormASteps(
         existingFormA.accreditionId as ObjectId,
         'Practice Manager',
+      );
+      await this.accreditionService.completeFormA(
+        existingFormA.accreditionId as ObjectId,
       );
       return existingFormA._id as unknown as string;
     }
@@ -256,12 +263,20 @@ export class FormAService {
     accreditionId: ObjectId,
     practiceStandards: PracticeStandardsDTO[],
   ) {
-    const objFormA = await this.formADAL.getFormAByAccreditionId(accreditionId);
+    let objFormA = await this.formADAL.getFormAByAccreditionId(accreditionId);
+    console.log(objFormA);
+    if (objFormA === null) {
+      objFormA = await this.addOrGetFormA(accreditionId);
+    }
+
     objFormA.practiceStandards = practiceStandards;
     await this.formADAL.updateFormA(objFormA._id, objFormA);
     await this.accreditionService.completeFormASteps(
       objFormA.accreditionId as ObjectId,
       'Standards',
+    );
+    await this.accreditionService.completeFormA(
+      objFormA.accreditionId as ObjectId,
     );
   }
 
@@ -281,9 +296,9 @@ export class FormAService {
       throw new BadRequestException('Please enter at least one supervisor');
     }
 
-    const objFormA = await this.formADAL.getFormAByAccreditionId(accreditionid);
+    let objFormA = await this.formADAL.getFormAByAccreditionId(accreditionid);
     if (objFormA === null) {
-      throw new BadRequestException('Please complete above steps first');
+      objFormA = await this.addOrGetFormA(accreditionid);
     }
     const existingObjFormA1 = await this.formA1Service.getFormA1ByAccreditionId(
       accreditionid,
@@ -456,26 +471,34 @@ export class FormAService {
       objFormA.accreditionId as ObjectId,
       'Supervisor',
     );
+
+    await this.accreditionService.completeFormA(
+      objFormA.accreditionId as ObjectId,
+    );
   }
 
   async submitRegistrarDetails(
     id: ObjectId,
     registrarDetails: RegistrarDetailsDTO[],
   ) {
-    const objFormA = await this.formADAL.getFormAByAccreditionId(id);
+    let objFormA = await this.formADAL.getFormAByAccreditionId(id);
+    if (objFormA === null) {
+      objFormA = await this.addOrGetFormA(id);
+    }
     objFormA.isCompleted = true;
     objFormA.registrarDetails = registrarDetails;
 
     await this.formADAL.updateFormA(objFormA._id, objFormA);
 
-    await this.accreditionService.completeFormA(
-      objFormA.accreditionId as ObjectId,
-    );
-
     await this.accreditionService.completeFormASteps(
       objFormA.accreditionId as ObjectId,
       'Registrar',
     );
+
+    await this.accreditionService.completeFormA(
+      objFormA.accreditionId as ObjectId,
+    );
+
     let isUpdate = false;
     const practiceDetails = await this.accreditionService.getAccreditionById(
       objFormA.accreditionId as ObjectId,
