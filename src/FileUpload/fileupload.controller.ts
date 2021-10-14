@@ -27,7 +27,7 @@ export class FileUploadController {
   @UseInterceptors(
     FilesInterceptor('file', 20, {
       storage: diskStorage({
-        destination: './Files',
+        destination: process.env.FILE_UPLOAD_PATH ?? "./Files",
         filename: editFileName,
       }),
       fileFilter: FileFilter,
@@ -59,7 +59,7 @@ export class FileUploadController {
   @Get(':imgpath')
   seeUploadedFile(@Param('imgpath') image, @Res() res) {
     res.setHeader('Content-Disposition', 'attachment; filename=' + image);
-    return res.sendFile(image, { root: './Files' });
+    return res.sendFile(image, { root: process.env.FILE_UPLOAD_PATH ?? "./Files" });
   }
 
   @Delete('file/:id')
@@ -85,6 +85,6 @@ export class FileDownloaderController {
   @Get(':imgpath')
   seeUploadedFile(@Param('imgpath') image, @Res() res) {
     res.setHeader('Content-Disposition', 'attachment; filename=' + image);
-    return res.sendFile(image, { root: './Files' });
+    return res.sendFile(image, { root: process.env.FILE_UPLOAD_PATH ?? "./Files" });
   }
 }

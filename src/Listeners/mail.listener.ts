@@ -7,10 +7,11 @@ mailer.on('mail.send', async (response: any) => {
     const transporter = nodemailer.createTransport({
       host: process.env.MAIL_HOST,
       port: process.env.MAIL_PORT,
+      ignoreTLS: true,
       auth: {
         user: process.env.MAIL_USER,
         pass: process.env.MAIL_PASSWORD,
-      },
+      }
     });
     const mail = await transporter.sendMail(response);
     console.log(mail);
@@ -35,6 +36,18 @@ export function mailSender(
     link,
   );
 }
+
+export function mailSenderOnFormReady(
+  email: string,
+  first_name: string,
+  last_name: string,
+  practice_name: string,
+  dueDate: string,
+  link: any,
+){
+  mailer.mailSenderForOnReady(email, first_name, last_name, practice_name, dueDate, link);
+}
+
 export function mailSenderForSupervisorRegistration(
   reciverFirstName: string,
   reciverLastName: string,

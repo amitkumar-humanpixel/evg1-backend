@@ -18,7 +18,7 @@ import { CSVParser } from 'src/Helper/csv.helper';
 import { validateData, validateFacilities } from '../Helper/validation.helper';
 import { AccreditionService } from 'src/Accredition/accredition.service';
 import { FacilityStaffService } from 'src/FacilityStaff/facilityStaff.service';
-import { mailSender } from 'src/Listeners/mail.listener';
+import { mailSender, mailSenderOnFormReady } from 'src/Listeners/mail.listener';
 import { UserService } from 'src/User/user.service';
 
 @Injectable()
@@ -150,12 +150,12 @@ export class FacilityService {
             '?id=' +
             accredition._id;
           for (let j = 0; j < practiceManagerData.length; j++) {
-            mailSender(
+            mailSenderOnFormReady(
               practiceManagerData[j].email,
               practiceManagerData[j].firstName,
               practiceManagerData[j].lastName,
               element.practiceName,
-              'Form Ready',
+              element.dueDate != null ? element.dueDate.getDate() + "-"+(element.dueDate.getMonth()+ 1)+'-'+ element.dueDate.getFullYear() : "", 
               link,
             );
           }
