@@ -1,4 +1,3 @@
-export interface fileDTO {
+export class FileDTO {
   path: string;
-  status: string;
 }

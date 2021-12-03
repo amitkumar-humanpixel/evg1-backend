@@ -19,7 +19,9 @@ import { ParseObjectIdPipe } from 'src/Pipe/objectId.pipe';
 import {
   AssignAccreditorDetailDTO,
   OtherDetailsDTO,
+  OtherDetailsTempDTO,
   SummaryDTO,
+  SummaryTempDTO,
 } from './formB.dto';
 import { FormBService } from './formB.service';
 import { FormBGuard } from 'src/Guard/formB.guard';
@@ -148,6 +150,7 @@ export class FormBController {
         .json(ApiResponseDTO.setResponse('ERROR', error['message']));
     }
   }
+
   @Post('submitSummary/:id')
   @UsePipes(new ValidationPipe({ transform: true }))
   async submitSummary(
@@ -177,6 +180,47 @@ export class FormBController {
   ) {
     try {
       await this.formBService.submitOtherDetails(accreditionId, otherDetails);
+      return res
+        .status(HttpStatus.OK)
+        .json(ApiResponseDTO.setResponse('SUCCESS', 'Updated Successfully.'));
+    } catch (error: any) {
+      console.log(error);
+      return res
+        .status(HttpStatus.BAD_REQUEST)
+        .json(ApiResponseDTO.setResponse('ERROR', error['message']));
+    }
+  }
+
+  @Post('submitTempSummary/:id')
+  async submitTempSummary(
+    @Res() res,
+    @Body() summary: SummaryTempDTO,
+    @Param('id', ParseObjectIdPipe) accreditionId: ObjectId,
+  ) {
+    try {
+      await this.formBService.submitTempSummary(accreditionId, summary);
+      return res
+        .status(HttpStatus.OK)
+        .json(ApiResponseDTO.setResponse('SUCCESS', 'Updated Successfully.'));
+    } catch (error: any) {
+      console.log(error);
+      return res
+        .status(HttpStatus.BAD_REQUEST)
+        .json(ApiResponseDTO.setResponse('ERROR', error['message']));
+    }
+  }
+
+  @Post('submitTempOtherDetails/:id')
+  async submitTempOtherDetails(
+    @Res() res,
+    @Body() otherDetails: OtherDetailsTempDTO,
+    @Param('id', ParseObjectIdPipe) accreditionId: ObjectId,
+  ) {
+    try {
+      await this.formBService.submitTempOtherDetails(
+        accreditionId,
+        otherDetails,
+      );
       return res
         .status(HttpStatus.OK)
         .json(ApiResponseDTO.setResponse('SUCCESS', 'Updated Successfully.'));

@@ -3,7 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, ObjectId } from 'mongoose';
 import { FormADTO } from './formA.dto';
 import { IFormA } from './formA.interface';
-
+import * as fs from 'fs';
 @Injectable()
 export class FormADAL {
   constructor(
@@ -181,27 +181,16 @@ export class FormADAL {
     );
   }
 
-  async deleteFileUpload(id: ObjectId, path: string) {
-    const pathData = path.split('/');
-    const fileData = await this.formAModel.findOne({ accreditionId: id });
-    if (fileData) {
-      for (let i = 0; i < fileData.practiceStandards.length; i++) {
-        if (
-          fileData.practiceStandards[i]?.filePath?.some(
-            (x) => x.fileUrl === process.env.BASE_URL + pathData[1],
-          )
-        ) {
-          fileData.practiceStandards[i].filePath = fileData.practiceStandards[
-            i
-          ]?.filePath?.filter(
-            (x) => x.fileUrl !== process.env.BASE_URL + pathData[1],
-          );
-          break;
-        }
-      }
-      await this.formAModel.updateOne({ accreditionId: id }, fileData, {
-        new: true,
-      });
-    }
+  async deleteFileUpload(fileId: ObjectId) {
+    return await this.formAModel.findOne({
+      'practiceStandards.filePath._id': fileId,
+    });
+  }
+
+  async updateDetails(fileId: ObjectId) {
+    await this.formAModel.updateMany(
+      { 'practiceStandards.filePath._id': fileId },
+      { $pull: { 'practiceStandards.$.filePath': { _id: fileId } } },
+    );
   }
 }

@@ -65,6 +65,11 @@ export const FormASchema = new mongoose.Schema(
       {
         title: { type: String },
         status: { type: String },
+        isFileUploadAllowed: { type: Boolean },
+        isRemark: { type: Boolean },
+        allowedFileTypes: [String],
+        allowedFileMimeTypes: [String],
+        list: [String],
         filePath: [
           {
             fileName: { type: String },

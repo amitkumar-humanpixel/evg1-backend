@@ -1,5 +1,5 @@
 import { Type } from 'class-transformer';
-import { IsNotEmpty, IsNumber, ValidateNested } from 'class-validator';
+import { IsNotEmpty, IsNumber, Matches, ValidateNested } from 'class-validator';
 import { ObjectId } from 'mongoose';
 import { checkListDTO } from 'src/FormA1/formA1.dto';
 export class PostDetailAddDTO {
@@ -9,6 +9,7 @@ export class PostDetailAddDTO {
   @IsNotEmpty({ message: 'Address should not be empty' })
   address: string;
   @IsNotEmpty({ message: 'Contact Number should not be empty' })
+  @Matches(/^(\+\d{1,3}[- ]?)?\d{9,12}$/, { message: 'Invalid phone number' })
   phone: string;
   @IsNotEmpty({ message: 'Total Number of GPs should not be empty' })
   totalNumberGPs: string;
@@ -61,7 +62,7 @@ export enum accreditionBody {
   'QPA' = 'QPA',
   'Global-Mark' = 'Global-Mark',
   'ACHS' = 'ACHS',
-  'IHCA' = 'IHCA'
+  'IHCA' = 'IHCA',
 }
 
 export enum status {

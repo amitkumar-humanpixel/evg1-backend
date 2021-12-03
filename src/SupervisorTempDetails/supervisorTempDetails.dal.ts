@@ -27,6 +27,25 @@ export class SupervisorTempDetailDAL {
     });
   }
 
+  async getDeleteFileUpload(fileId: ObjectId): Promise<ISupervisorTempDetails> {
+    return await this.supervisorTempDetailModel.findOne({
+      'supervisorDetails.standardsDetail.filePath._id': fileId,
+    });
+  }
+
+  async updateDetails(fileId: ObjectId) {
+    await this.supervisorTempDetailModel.updateMany(
+      { 'supervisorDetails.standardsDetail.filePath._id': fileId },
+      {
+        $pull: {
+          'supervisorDetails.standardsDetail.$[].filePath': {
+            _id: fileId,
+          },
+        },
+      },
+    );
+  }
+
   async updateSupervisorTempDetails(
     id: ObjectId,
     supervisor: ISupervisorTempDetails,

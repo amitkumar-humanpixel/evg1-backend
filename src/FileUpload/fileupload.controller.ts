@@ -7,22 +7,23 @@ import {
   Res,
   Param,
   UseFilters,
+  UploadedFiles,
+  UseGuards,
   Delete,
   Body,
-  UploadedFiles,
 } from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { HttpExceptionFilter } from 'src/Filter/exception.filter';
 import { editFileName, FileFilter } from '../Utils/file-upload.utils';
-import { ObjectId } from 'mongoose';
-import { FileServise } from 'src/FileUpload/fileupload.service';
-import { fileDTO } from 'src/FileUpload/fileupload.dto';
+import { OktaGuard } from 'src/Guard/okta.guard';
 import * as fs from 'fs';
+import { FileDTO } from './fileupload.dto';
+
 @Controller('fileUploader')
+@UseGuards(OktaGuard)
 @UseFilters(new HttpExceptionFilter())
 export class FileUploadController {
-  constructor(private readonly FileServise: FileServise) { }
   @Post('file')
   @UseInterceptors(
     FilesInterceptor('file', 20, {
@@ -62,24 +63,10 @@ export class FileUploadController {
     return res.sendFile(image, { root: './Files' });
   }
 
-  @Delete('file/:id')
-  async deleteFile(
-    @Res() res,
-    @Body() fileDTO: fileDTO,
-    @Param('id') id: ObjectId,
-  ) {
-    if (fs.existsSync(fileDTO.path)) {
-      fs.unlinkSync(fileDTO.path);
-    }
-    await this.FileServise.deleteFileService(id, fileDTO.status, fileDTO.path);
-    return res.status(HttpStatus.OK).json({
-      status: 'SUCCESS',
-      message: 'Delete successfully.',
-    });
-  }
 }
 
 @Controller('fileDownloader')
+@UseGuards(OktaGuard)
 @UseFilters(new HttpExceptionFilter())
 export class FileDownloaderController {
   @Get(':imgpath')

@@ -13,10 +13,18 @@ import {
   GetFacilityStaffUser,
   GetRegistrarUser,
 } from 'src/FacilityStaff/facilityStaff.dto';
-import { FormA1DTO, SupervisorDetailsDTOA1 } from 'src/FormA1/formA1.dto';
+import {
+  FormA1DTO,
+  standardsDetailDTO,
+  SupervisorDetailsDTOA1,
+} from 'src/FormA1/formA1.dto';
 import { FormA1Service } from 'src/FormA1/formA1.service';
 import { FormADAL } from './formA.dal';
+import * as fs from 'fs';
+import * as FORMASTANDARDS from '../../static/formAStandards.json';
+import * as SUPERVISORSTANDARDS from '../../static/supervisorStandards.json';
 import {
+  fileDetal,
   FormADTO,
   GetSupervisorDetails,
   PracticeManagementDTO,
@@ -30,6 +38,7 @@ import {
 import { mailSender } from 'src/Listeners/mail.listener';
 import { UserService } from 'src/User/user.service';
 import { SupervisorTempDetailService } from 'src/SupervisorTempDetails/supervisorTempDetails.service';
+import { IFormA } from './formA.interface';
 @Injectable()
 export class FormAService {
   constructor(
@@ -44,7 +53,7 @@ export class FormAService {
     @Inject(forwardRef(() => UserService))
     private userService: UserService,
     private readonly tempSupervisorDetail: SupervisorTempDetailService,
-  ) { }
+  ) {}
 
   async addOrGetFormA(accreditionId: ObjectId) {
     const existingFormA = await this.formADAL.getFormAByAccreditionId(
@@ -132,8 +141,9 @@ export class FormAService {
     users.usualWorkingHours =
       practiceManagers?.practiceManagerDetail?.usualWorkingHours ?? {};
     users.hours = practiceManagers?.practiceManagerDetail?.hours ?? [];
-    users.name = `${practiceManagers?.user?.firstName ?? ''} ${practiceManagers?.user?.lastName ?? ''
-      }`;
+    users.name = `${practiceManagers?.user?.firstName ?? ''} ${
+      practiceManagers?.user?.lastName ?? ''
+    }`;
     users.email = `${practiceManagers?.user?.email ?? ''}`;
     return users;
   }
@@ -143,10 +153,38 @@ export class FormAService {
   async getAccreditorFullData(accreditionId: ObjectId): Promise<any> {
     return await this.formADAL.getUserFullData(accreditionId);
   }
+  async getFormADetailsByAccreditionId(
+    accreditionId: ObjectId,
+  ): Promise<IFormA> {
+    return await this.formADAL.getFormAByAccreditionId(accreditionId);
+  }
   async getStandardDetails(accreditionId: ObjectId): Promise<any> {
     const formA = await this.formADAL.getFormAByAccreditionId(accreditionId);
     let standardDeatils = new Array<PracticeStandardsDTO>();
-    standardDeatils = formA?.practiceStandards ?? [];
+    if (formA !== null) {
+      if (formA.practiceStandards.length > 0) {
+        standardDeatils = formA?.practiceStandards;
+      } else {
+        for (let index = 0; index < FORMASTANDARDS.length; index++) {
+          const element = FORMASTANDARDS[index];
+          const standards = new PracticeStandardsDTO();
+          standards.allowedFileTypes = element?.allowedFileTypes ?? undefined;
+          standards.allowedFileMimeTypes = element?.allowedFileMimeTypes ?? undefined;
+          standards.list = element?.list ?? undefined;
+          standards.title = element.title;
+          standards.isFileUploadAllowed =
+            element?.isFileUploadAllowed ?? undefined;
+          standards.isRemark = element?.isRemark ?? undefined;
+          standards.status = element.status;
+
+          formA.practiceStandards.push(standards);
+        }
+        await this.updateFormA(formA);
+        standardDeatils = formA?.practiceStandards;
+      }
+    } else {
+      throw new BadRequestException('Invalid request!');
+    }
     return standardDeatils;
   }
 
@@ -204,14 +242,19 @@ export class FormAService {
         const userData = registrarDetails[0].placement.find(
           (x) => x.placementId == element.placementId,
         );
-        registrar.name = `${userData?.firstName ?? ''} ${userData?.lastName ?? ''
-          }`;
+        registrar.name = `${userData?.firstName ?? ''} ${
+          userData?.lastName ?? ''
+        }`;
 
         arrRegistrar.push(registrar);
       }
     }
 
     return arrRegistrar;
+  }
+
+  async updateFormA(formA: IFormA) {
+    await this.formADAL.updateFormA(formA._id, formA);
   }
 
   async submitPracticeManagerDetail(
@@ -262,13 +305,24 @@ export class FormAService {
     accreditionId: ObjectId,
     practiceStandards: PracticeStandardsDTO[],
   ) {
+    await this.validateStandards(practiceStandards);
+
     let objFormA = await this.formADAL.getFormAByAccreditionId(accreditionId);
-    console.log(objFormA);
+
     if (objFormA === null) {
       objFormA = await this.addOrGetFormA(accreditionId);
     }
 
-    objFormA.practiceStandards = practiceStandards;
+    objFormA.practiceStandards.map((standard) => {
+      const practiceStandard = practiceStandards.find(
+        (x) => x.title === standard.title,
+      );
+      standard.status = practiceStandard.status;
+      standard.filePath = practiceStandard.filePath;
+      standard.remarks = practiceStandard.remarks;
+    });
+
+    //objFormA.practiceStandards = practiceStandards;
     await this.formADAL.updateFormA(objFormA._id, objFormA);
     await this.accreditionService.completeFormASteps(
       objFormA.accreditionId as ObjectId,
@@ -277,6 +331,78 @@ export class FormAService {
     await this.accreditionService.completeFormA(
       objFormA.accreditionId as ObjectId,
     );
+  }
+
+  async submitPracticeStandardsDetails(
+    accreditionId: ObjectId,
+    practiceStandard: PracticeStandardsDTO,
+    fileDetails: fileDetal[],
+  ) {
+    let objFormA = await this.formADAL.getFormAByAccreditionId(accreditionId);
+
+    if (objFormA === null) {
+      objFormA = await this.addOrGetFormA(accreditionId);
+    }
+    let isUpdated = false;
+    if (objFormA.practiceStandards.length > 0) {
+      objFormA.practiceStandards.map((x) => {
+        if (x.title === practiceStandard.title) {
+          for (let f = 0; f < fileDetails.length; f++) {
+            x.filePath.push(fileDetails[f]);
+          }
+          x.remarks = practiceStandard.remarks;
+          x.status = practiceStandard.status;
+          x.title = practiceStandard.title;
+          isUpdated = true;
+        }
+      });
+      if (!isUpdated) {
+        practiceStandard.filePath = fileDetails;
+        objFormA.practiceStandards.push(practiceStandard);
+      }
+    } else {
+      practiceStandard.filePath = fileDetails;
+      objFormA.practiceStandards.push(practiceStandard);
+    }
+    await this.formADAL.updateFormA(objFormA._id, objFormA);
+    let data = objFormA.practiceStandards.find(
+      (x) => x.title === practiceStandard.title,
+    );
+
+    const files = [];
+    for (let index = 0; index < fileDetails.length; index++) {
+      const element = fileDetails[index];
+      data.filePath.map((x) => {
+        if (x.fileName === element.fileName) {
+          files.push(x);
+        }
+      });
+    }
+    data.filePath = files;
+
+    return data;
+  }
+
+  async validateStandards(practiceStandards: PracticeStandardsDTO[]) {
+    for (let index = 0; index < practiceStandards.length; index++) {
+      const element = practiceStandards[index];
+
+      if (element?.filePath?.length > 0) {
+        if (element.status === 'true') {
+          for (let j = 0; j < element.filePath.length; j++) {
+            const file = element.filePath[j];
+            if (
+              file.fileName &&
+              !(await fs.existsSync(`Files/${file.fileName}`))
+            ) {
+              throw new BadRequestException('Invalid file path.');
+            }
+          }
+        } else {
+          throw new BadRequestException('Invalid operation.');
+        }
+      }
+    }
   }
 
   async submitSupervisors(
@@ -326,18 +452,18 @@ export class FormAService {
     for (let index = 0; index < objFormA.supervisorDetails.length; index++) {
       const element = objFormA.supervisorDetails[index];
       const exists = supervisorDetails.find((x) => x.userId == element.userId);
-      let status = false;
-      if (existingObjFormA1) {
-        const existingingData = existingObjFormA1.supervisorDetails.find(
-          (x) => x.userId === element.userId,
-        );
-        if (existingingData) {
-          status = existingingData.standardsDetail.length > 0 ? true : false;
-        }
-      }
+      // let status = false;
+      // if (existingObjFormA1) {
+      //   const existingingData = existingObjFormA1.supervisorDetails.find(
+      //     (x) => x.userId === element.userId,
+      //   );
+      //   if (existingingData) {
+      //     status = existingingData.standardsDetail.length > 0 ? true : false;
+      //   }
+      // }
       if (exists) {
         element.categoryOfSupervisor = exists.categoryOfSupervisor;
-        element.status = status;
+        //element.status = status;
         element.contactNumber = exists.contactNumber;
         element.userId = exists.userId;
         element.isNotify = exists.isNotify;
@@ -356,12 +482,6 @@ export class FormAService {
         addSupervisors.push(element);
       }
     }
-    // if (existingSupervisors.length > 0) {
-    //  ;
-    // }
-    // if (addSupervisors.length > 0) {
-    //   objFormA.supervisorDetails = [];
-    // }
     objFormA.supervisorDetails = [...existingSupervisors, ...addSupervisors];
     await this.formADAL.updateFormA(objFormA._id, objFormA);
 
@@ -378,7 +498,6 @@ export class FormAService {
         }
       }
       if (existingObjFormA1 === null) {
-        console.log('log', element);
         objFormA1.addSupervisorsDetails(element);
       } else {
         if (formA1 != null) {
@@ -402,43 +521,25 @@ export class FormAService {
               element.categoryOfSupervisor;
             objSupervisorDetails.hours = hours;
             objSupervisorDetails.isFormA1Complete = element.isFormA1Complete;
-
+            objSupervisorDetails.addStandards(true);
             formA1.supervisorDetails.push(objSupervisorDetails);
           } else {
             formA1.supervisorDetails.map((x) => {
               if (x.userId == existing.userId) {
                 x.hours = hours;
+                if (
+                  x.standardsDetail === undefined ||
+                  x.standardsDetail === null ||
+                  x.standardsDetail.length === 0
+                ) {
+                  x.addStandards(false);
+                }
               }
             });
           }
         }
-        // removeFromExisting = existingObjFormA1.supervisorDetails.filter(
-        //   (x) => x.userId !== element.userId,
-        // );
-
-        // for (let j = 0; j < existingObjFormA1.supervisorDetails.length; j++) {
-        //   const existingData = existingObjFormA1.supervisorDetails[j];
-        //   if (existingData.userId !== element.userId) {
-        //     if (
-        //       removeFromExisting.find((x) => {
-        //         x.userId === element.userId;
-        //       }) === undefined
-        //     ) {
-        //       removeFromExisting.push(existingData);
-        //     }
-        //   }
-        // }
-        // console.log('existing ', existingObjFormA1.supervisorDetails);
-        // const check = existingObjFormA1.supervisorDetails.find(
-        //   (x) => x.userId === element.userId,
-        // );
-        // console.log('check : ', check);
-        // if (!check) {
-
-        // }
       }
     }
-    //console.log('remove : ', removeFromExisting);
     if (formA1 == null) {
       objFormA1.addFormA1(objFormA.accreditionId as ObjectId, objFormA._id);
 
@@ -451,12 +552,6 @@ export class FormAService {
     } else {
       const formA1SupervisorDetails = formA1.supervisorDetails;
 
-      // for (let index = 0; index < removeFromExisting.length; index++) {
-      //   const element = removeFromExisting[index];
-      //   formA1SupervisorDetails = formA1SupervisorDetails.filter(
-      //     (x) => x.userId !== element.userId,
-      //   );
-      // }
       formA1.supervisorDetails = formA1SupervisorDetails;
       await this.formA1Service.updateFormA1ByAccreditionId(formA1);
 
@@ -514,8 +609,9 @@ export class FormAService {
         const link =
           process.env.BASE_URL +
           process.env.FORM_COMPLETE_PARTA +
-          `${nameUser?.firstName.toLowerCase() ?? ''}${nameUser?.lastName.charAt(0).toUpperCase() +
-          nameUser?.lastName.slice(1) ?? ''
+          `${nameUser?.firstName.toLowerCase() ?? ''}${
+            nameUser?.lastName.charAt(0).toUpperCase() +
+              nameUser?.lastName.slice(1) ?? ''
           }/` +
           `?id=${id}&sid=${userData.userId}`;
         mailSender(
@@ -567,7 +663,7 @@ export class FormAService {
           accreditionId,
           userId,
         );
-      if (tempDetails.length > 0) {
+      if (tempDetails != null && tempDetails.length > 0) {
         this.tempSupervisorDetail.deleteSupervisorDetail(
           accreditionId,
           userId as number,
@@ -577,7 +673,25 @@ export class FormAService {
     }
   }
 
-  async deleteFileUpload(id: ObjectId, path: string) {
-    this.formADAL.deleteFileUpload(id, path);
+  async deleteFileUpload(elementId: ObjectId, fileId: ObjectId) {
+    const fileData = await this.formADAL.deleteFileUpload(fileId);
+    if (fileData) {
+      const element = fileData.practiceStandards.find(
+        (x) => x._id.toString() === elementId.toString(),
+      );
+      if (element) {
+        const fileDetails = element.filePath.find(
+          (x) => x._id.toString() === fileId.toString(),
+        );
+        if (fileDetails) {
+          fs.unlinkSync(`Files/${fileDetails.fileName}`);
+          await this.formADAL.updateDetails(fileId);
+        }
+      } else {
+        throw new BadRequestException('Invalid element Id');
+      }
+    } else {
+      throw new BadRequestException('Invalid file Id');
+    }
   }
 }

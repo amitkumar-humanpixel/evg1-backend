@@ -222,7 +222,6 @@ export class FacilityStaffService {
         }
         validationObject.processed++;
       } else {
-        console.log(responseData);
         validationObject.ErrorData.push(
           `Facility Id : ${newFacilityStaff.facilityId} its ${responseData?.key ?? ''
           } data is not proper, its data is ${responseData?.value ?? ''

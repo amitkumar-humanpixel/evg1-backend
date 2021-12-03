@@ -4,6 +4,7 @@ import { AccreditionService } from 'src/Accredition/accredition.service';
 import { FacilityStaffDAL } from 'src/FacilityStaff/facilityStaff.dal';
 import { GetFacilityStaffUser } from 'src/FacilityStaff/facilityStaff.dto';
 import { FormAService } from 'src/FormA/formA.service';
+import { FormBTempService } from 'src/FormBTempDetails/formBTemp.service';
 import { mailSender } from 'src/Listeners/mail.listener';
 import { UserService } from 'src/User/user.service';
 import { FormBDAL } from './formB.dal';
@@ -14,8 +15,10 @@ import {
   AssignAccreditorDetailDTO,
   FormBDTO,
   OtherDetailsDTO,
+  OtherDetailsTempDTO,
   SummaryDataDTO,
   SummaryDTO,
+  SummaryTempDTO,
 } from './formB.dto';
 import { IFormB } from './formB.interface';
 
@@ -28,9 +31,11 @@ export class FormBService {
     private formAService: FormAService,
     @Inject(forwardRef(() => AccreditionService))
     private accreditionService: AccreditionService,
+    @Inject(forwardRef(() => FormBTempService))
+    private formBTempService: FormBTempService,
     @Inject(forwardRef(() => UserService))
     private userService: UserService,
-  ) { }
+  ) {}
 
   async getAccreditors(facilityId: number): Promise<GetFacilityStaffUser[]> {
     let supervisors =
@@ -96,6 +101,7 @@ export class FormBService {
 
   async addFormB(formB: FormBDTO) {
     await this.formBDAL.addFormB(formB);
+    await this.formBTempService.addFormB(formB);
   }
 
   async submitAssignedAccriditor(
@@ -105,6 +111,10 @@ export class FormBService {
     const formB = await this.formBDAL.getFormBByAccreditionIdId(accreditionId);
     formB.accreditorId = accreditor.accreditorId;
     await this.formBDAL.updateFormB(formB._id, formB);
+    await this.formBTempService.submitAssignedAccriditor(
+      accreditionId,
+      accreditor.accreditorId,
+    );
     await this.accreditionService.completeFormBSteps(
       formB.accreditionId as ObjectId,
       'Assign Accreditor',
@@ -160,6 +170,9 @@ export class FormBService {
     await this.accreditionService.completeAllFormB(
       formB.accreditionId as ObjectId,
     );
+    await this.formBTempService.completeSummary(
+      formB.accreditionId as ObjectId,
+    );
   }
 
   async submitOtherDetails(
@@ -195,6 +208,9 @@ export class FormBService {
       formB.isUserNotify = true;
     }
     await this.formBDAL.updateFormB(formB._id, formB);
+    await this.formBTempService.completeDeclaration(
+      formB.accreditionId as ObjectId,
+    );
   }
 
   async sentMail(users: any, accreditionId: ObjectId) {
@@ -223,50 +239,76 @@ export class FormBService {
   }
 
   async getSummary(id: ObjectId): Promise<SummaryDataDTO> {
-    let data = await this.formBDAL.getSummary(id);
-    data = data[0];
-    const response = new SummaryDataDTO();
-    response.accreditationWithEV = data?.accreditationWithEV ?? false;
-    let accreditor = null;
-    if (data?.accreditorId != undefined ?? false) {
-      accreditor = await this.userService.getUserByUserId(data.accreditorId);
-    }
+    let data: any = await this.formBTempService.getSummary(id);
+    if (data) {
+      console.log('239');
+      return data;
+    } else {
+      data = await this.formBDAL.getSummary(id);
+      data = data[0];
+      const response = new SummaryDataDTO();
+      response.accreditationWithEV = data?.accreditationWithEV ?? false;
+      let accreditor = null;
+      if (data?.accreditorId != undefined ?? false) {
+        accreditor = await this.userService.getUserByUserId(data.accreditorId);
+      }
 
-    response.accreditorDetails = new accreditorDetails();
-    response.accreditorDetails.userId = accreditor?.userId ?? undefined;
-    response.accreditorDetails.name = `${accreditor?.firstName ?? ''} ${accreditor?.lastName ?? ''
+      response.accreditorDetails = new accreditorDetails();
+      response.accreditorDetails.userId = accreditor?.userId ?? undefined;
+      response.accreditorDetails.name = `${accreditor?.firstName ?? ''} ${
+        accreditor?.lastName ?? ''
       }`;
-    response.assessment = data?.assessment ?? [];
-    response.classification = data?.classification ?? '';
-    response.dateOfVisit = data?.dateOfVisit ?? '';
-    response.dateOfReportComplete = data?.dateOfReportComplete ?? '';
-    response.practiceDetail = data?.practiceDetail ?? '';
-    response.applications = new Array<applicationsDTO>();
-    for (let index = 0; index < data?.applications.length ?? 0; index++) {
-      const element = data.applications[index];
-      const application = new applicationsDetailDTO();
-      application.ACRRM = element.ACRRM;
-      application.RACGP = element.RACGP;
-      application.supervisorId = element.supervisorId;
-      application.consideration = element.consideration;
-      application.remarks = element.remarks;
-      application.isFormRegistrar = element.isFormRegistrar;
-      let supervisorData = data.supervisor.find(
-        (x) => x.userId == element.supervisorId,
-      );
-      application.name = `${supervisorData.firstName} ${supervisorData.lastName}`;
-      supervisorData = data.formA.supervisorDetails.find(
-        (x) => x.userId == element.supervisorId,
-      );
-      application.categoryOfSupervisor = `${supervisorData?.categoryOfSupervisor ?? ''
+      response.assessment = data?.assessment ?? [];
+      response.classification = data?.classification ?? '';
+      response.dateOfVisit = data?.dateOfVisit ?? '';
+      response.dateOfReportComplete = data?.dateOfReportComplete ?? '';
+      response.practiceDetail = data?.practiceDetail ?? '';
+      response.applications = new Array<applicationsDTO>();
+      for (let index = 0; index < data?.applications.length ?? 0; index++) {
+        const element = data.applications[index];
+        const application = new applicationsDetailDTO();
+        application.ACRRM = element.ACRRM;
+        application.RACGP = element.RACGP;
+        application.supervisorId = element.supervisorId;
+        application.consideration = element.consideration;
+        application.remarks = element.remarks;
+        application.isFormRegistrar = element.isFormRegistrar;
+        let supervisorData = data.supervisor.find(
+          (x) => x.userId == element.supervisorId,
+        );
+        application.name = `${supervisorData.firstName} ${supervisorData.lastName}`;
+        supervisorData = data.formA.supervisorDetails.find(
+          (x) => x.userId == element.supervisorId,
+        );
+        application.categoryOfSupervisor = `${
+          supervisorData?.categoryOfSupervisor ?? ''
         }`;
 
-      response.applications.push(application);
+        response.applications.push(application);
+      }
+      return response;
     }
-    return response;
   }
 
   async getOtherDetails(id: ObjectId): Promise<IFormB> {
-    return await this.formBDAL.getOtherDetails(id);
+    let data: any = await this.formBTempService.getOtherDetails(id);
+
+    if (data) {
+      return data;
+    } else {
+      data = await this.formBDAL.getOtherDetails(id);
+      return data;
+    }
+  }
+
+  async submitTempSummary(accreditionId: ObjectId, summary: SummaryTempDTO) {
+    await this.formBTempService.submitSummary(accreditionId, summary);
+  }
+
+  async submitTempOtherDetails(
+    accreditionId: ObjectId,
+    otherDetails: OtherDetailsTempDTO,
+  ) {
+    await this.formBTempService.submitOtherDetails(accreditionId, otherDetails);
   }
 }

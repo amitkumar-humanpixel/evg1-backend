@@ -12,15 +12,26 @@ import {
   ValidationPipe,
   UseGuards,
   Headers,
+  Delete,
+  UseInterceptors,
+  UploadedFiles,
 } from '@nestjs/common';
 import { ObjectId } from 'mongoose';
 import { ApiResponseDTO } from 'src/Common/common.dto';
 import { HttpExceptionFilter } from 'src/Filter/exception.filter';
 import { ParseObjectIdPipe } from 'src/Pipe/objectId.pipe';
-import { finalCheckListDetailsDTO, SupervisorDetailsDTOA1 } from './formA1.dto';
+import {
+  deleteSupervisorStandardsDTO,
+  finalCheckListDetailsDTO,
+  standardsDetailDTO,
+  SupervisorDetailsDTOA1,
+} from './formA1.dto';
 import { FormA1Service } from './formA1.service';
 import { FormA1Guard } from 'src/Guard/formA1.guard';
 import { OktaGuard } from 'src/Guard/okta.guard';
+import { FilesInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import { editFileName, FileFilter } from 'src/Utils/file-upload.utils';
 
 @Controller('formA1')
 @UseGuards(FormA1Guard)
@@ -52,6 +63,7 @@ export class FormA1Controller {
         .json(ApiResponseDTO.setResponse('ERROR', error['message']));
     }
   }
+
   @Get('finalCheckList/:id')
   async getFinalCheckList(
     @Res() res,
@@ -74,24 +86,6 @@ export class FormA1Controller {
     }
   }
 
-  // @Get('supervisors/:id')
-  // async getSupervisors(
-  //   @Res() res,
-  //   @Param('id', ParseObjectIdPipe) id: ObjectId,
-  // ) {
-  //   try {
-  //     return res
-  //       .status(HttpStatus.OK)
-  //       .json(
-  //         ApiResponseDTO.setResponse(
-  //           'SUCCESS',
-  //           await this.formA1Service.getSupervisors(id),
-  //         ),
-  //       );
-  //   } catch (error: any) {
-  //     return res.status(HttpStatus.BAD_REQUEST).json(error['message']);
-  //   }
-  // }
   @Get('getSupervisorDetail/:id/:userId')
   async getSupervisorsDetails(
     @Res() res,
@@ -103,7 +97,9 @@ export class FormA1Controller {
       if (id === undefined && userId === undefined) {
         return res.status(HttpStatus.OK);
       }
-
+      if (userId !== userid) {
+        return res.status(HttpStatus.OK);
+      }
       return res
         .status(HttpStatus.OK)
         .json(
@@ -201,5 +197,73 @@ export class FormA1Controller {
         .status(HttpStatus.BAD_REQUEST)
         .json(ApiResponseDTO.setResponse('ERROR', error['message']));
     }
+  }
+
+  @Delete('deleteSupervisorStandardFile')
+  async deleteSupervisorStandardFile(
+    @Res() res,
+    @Body() deleteSupervisorStandardDetails: deleteSupervisorStandardsDTO,
+  ) {
+    try {
+      await this.formA1Service.deleteFileUpload(
+        deleteSupervisorStandardDetails.supervisorId,
+        deleteSupervisorStandardDetails.elementId,
+        deleteSupervisorStandardDetails.fileId,
+      );
+      return res
+        .status(HttpStatus.OK)
+        .json(ApiResponseDTO.setResponse('SUCCESS', 'Deleted successfully!!'));
+    } catch (error: any) {
+      return res
+        .status(HttpStatus.BAD_REQUEST)
+        .json(ApiResponseDTO.setResponse('ERROR', error['message']));
+    }
+  }
+
+  @Post('file/:id/:userId')
+  @UseInterceptors(
+    FilesInterceptor('file', 20, {
+      storage: diskStorage({
+        destination: './Files',
+        filename: editFileName,
+      }),
+      fileFilter: FileFilter,
+      limits: {
+        fileSize: 10485760,
+      },
+    }),
+  )
+  async uploadedFile(
+    @Res() res,
+    @Param('id', ParseObjectIdPipe) id: ObjectId,
+    @Param('userId', ParseIntPipe) userId: number,
+    @Body()
+    practiceStandards: standardsDetailDTO,
+    @UploadedFiles() files,
+  ) {
+    const arrResponse = [];
+
+    files.forEach((file) => {
+      const response = {
+        fileUrl: `${process.env.BASE_URL}${file.filename}`,
+        fileName: file.filename,
+      };
+      arrResponse.push(response);
+    });
+
+    const data = await this.formA1Service.submitStandardsDetails(
+      id,
+      userId,
+      practiceStandards,
+      arrResponse,
+    );
+
+    const fileResponse = {
+      status: 'SUCCESS',
+      data: data,
+      message: 'Successfully Uploaded.',
+    };
+
+    return res.status(HttpStatus.OK).json(fileResponse);
   }
 }

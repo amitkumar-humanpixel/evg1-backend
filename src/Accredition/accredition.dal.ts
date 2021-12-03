@@ -15,7 +15,7 @@ export class AccreditionDAL {
   constructor(
     @InjectModel('accredition')
     private readonly accreditionModel: Model<IAccredition>,
-  ) { }
+  ) {}
 
   async createAccredition(
     accredition: CreateAccreditionDTO,
@@ -280,7 +280,7 @@ export class AccreditionDAL {
     return await this.accreditionModel.aggregate(query).allowDiskUse(true);
   }
 
-  async getPracticeManagerDetailData(
+  async getPracticeManagerCompleteDetailData(
     userId: number,
     skip: number,
     limit: number,
@@ -289,7 +289,12 @@ export class AccreditionDAL {
 
     query.push({
       $match: {
-        $or: [{ status: 'INCOMPLETE' }, { status: 'COMPLETE' }],
+        $or: [
+          { status: 'COMPLETE' },
+          {
+            $and: [{ isFormAComplete: true }, { isFormA1Complete: true }],
+          },
+        ],
         users: { $in: [userId.toString()] },
       },
     });
@@ -322,6 +327,67 @@ export class AccreditionDAL {
         isAddressRecommendation: 1,
         isFormA1Complete: 1,
         isFormAComplete: 1,
+      },
+    });
+    query.push({
+      $facet: {
+        paginatedResult: [
+          {
+            $skip: (skip - 1) * limit,
+          },
+          { $limit: limit },
+        ],
+        totalCount: [
+          {
+            $count: 'count',
+          },
+        ],
+      },
+    });
+    return await this.accreditionModel.aggregate(query).allowDiskUse(true);
+  }
+
+  async getPracticeManagerIncompleteDashboardData(
+    userId: number,
+    skip: number,
+    limit: number,
+  ): Promise<any> {
+    const query: any = [];
+
+    query.push({
+      $match: {
+        status: 'INCOMPLETE',
+        users: { $in: [userId.toString()] },
+        $or: [{ isFormA1Complete: false }, { isFormAComplete: false }],
+      },
+    });
+
+    query.push({
+      $lookup: {
+        from: 'facilities',
+        localField: 'facilityId',
+        foreignField: 'facilityId',
+        as: 'facility',
+      },
+    });
+    query.push({
+      $unwind: {
+        path: '$facility',
+      },
+    });
+    query.push({
+      $project: {
+        status: 1,
+        createdAt: 1,
+        facility: 1,
+        facilityId: 1,
+        formA: 1,
+        formA1: 1,
+        formB: 1,
+        _id: 1,
+        isPostDetailsComplete: 1,
+        isReaccreditationChecklistComplete: 1,
+        isAddressRecommendation: 1,
       },
     });
     query.push({
@@ -436,6 +502,11 @@ export class AccreditionDAL {
         count: { $sum: 1 },
       },
     });
+
+    query.push({
+      $sort: { _id: 1 },
+    });
+
     const output = await this.accreditionModel.aggregate(query);
     return output;
   }

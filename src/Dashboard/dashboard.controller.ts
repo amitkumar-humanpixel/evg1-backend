@@ -17,7 +17,7 @@ import { DashboardService } from './dashboard.service';
 @UseGuards(OktaGuard)
 @UseFilters(new HttpExceptionFilter())
 export class DashboardController {
-  constructor(private readonly dashboardService: DashboardService) {}
+  constructor(private readonly dashboardService: DashboardService) { }
 
   @Get()
   async getDashboardData(@Res() res, @Query() query) {

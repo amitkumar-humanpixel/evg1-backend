@@ -6,7 +6,10 @@ import {
 } from '@nestjs/common';
 import { ObjectId } from 'mongoose';
 import { IFacility } from 'src/Facility/facility.interface';
-import { SupervisorDetailsDTO } from 'src/FormA/formA.dto';
+import {
+  PracticeStandardsDTO,
+  SupervisorDetailsDTO,
+} from 'src/FormA/formA.dto';
 import { FormAService } from 'src/FormA/formA.service';
 import { UserService } from 'src/User/user.service';
 import { AccreditionDAL } from './accredition.dal';
@@ -25,6 +28,7 @@ import {
   supervisorDataDTO,
 } from './accredition.dto';
 import { IAccredition } from './accredition.interface';
+import * as FORMASTANDARDS from '../../static/formAStandards.json';
 
 @Injectable()
 export class AccreditionService {
@@ -37,6 +41,44 @@ export class AccreditionService {
   ) { }
 
   async updateAccredition(postDetail: PostDetailAddDTO): Promise<ObjectId> {
+    const re = new RegExp(
+      /^((ftp|http|https):\/\/)?www\.([A-z]+)\.([A-z]{2,})/,
+    );
+    if (postDetail.practiceWebsite && !re.test(postDetail.practiceWebsite)) {
+      throw new BadRequestException('Invalid website');
+    }
+
+    const accreditionDetails =
+      await this.accreditionDAL.getAccreditionByFacilityId(
+        postDetail.facilityId as number,
+      );
+
+    if (accreditionDetails) {
+      let formA = await this.formAService.getFormADetailsByAccreditionId(
+        accreditionDetails._id,
+      );
+
+      if (formA === null) {
+        formA = await this.formAService.addOrGetFormA(accreditionDetails._id);
+        for (let index = 0; index < FORMASTANDARDS.length; index++) {
+          const element = FORMASTANDARDS[index];
+          const standards = new PracticeStandardsDTO();
+          standards.allowedFileTypes = element?.allowedFileTypes ?? undefined;
+          standards.allowedFileMimeTypes =
+            element?.allowedFileMimeTypes ?? undefined;
+          standards.list = element?.list ?? undefined;
+          standards.title = element.title;
+          standards.isFileUploadAllowed =
+            element?.isFileUploadAllowed ?? undefined;
+          standards.isRemark = element?.isRemark ?? undefined;
+          standards.status = element.status;
+
+          formA.practiceStandards.push(standards);
+        }
+        await this.formAService.updateFormA(formA);
+      }
+    }
+
     return await this.accreditionDAL.updateAccredition(postDetail);
   }
 
@@ -310,11 +352,8 @@ export class AccreditionService {
                 accredition.formA1[i].userId === user.userId ? true : false;
             }
           }
-          console.log(obj);
           const element = accredition.formA1[i];
           if (!element.stepName.toLowerCase().includes('final')) {
-            console.log(accredition.formA1[i].userId);
-            console.log(user.userId);
             const form = new SideBarDataDTO(
               element.stepName,
               element.isComplete,
@@ -388,7 +427,6 @@ export class AccreditionService {
   }
 
   async getFinalApplicationSubmission(user: any, accredition: any) {
-    console.log(accredition);
     if (!accredition.isFormAComplete) {
       return false;
     } else if (
@@ -430,6 +468,12 @@ export class AccreditionService {
     ) {
       if (accredition.isFormA1Complete && accredition.isFormAComplete) {
         if (!accredition.isAddressRecommendation) {
+          return true;
+        } else {
+          return false;
+        }
+      } else if (!accredition.isFormAComplete) {
+        if (accredition.formA.every((x) => x.isComplete === true)) {
           return true;
         } else {
           return false;
@@ -595,7 +639,6 @@ export class AccreditionService {
         count: review,
       });
     }
-    console.log(response);
     return response;
   }
 
@@ -611,6 +654,8 @@ export class AccreditionService {
       limit,
       status,
     );
+    const total =
+      data[0].totalCount.length > 0 ? data[0].totalCount[0].count : 0;
     const obj = new supervisorDataDTO();
     obj.paginatedResult = [];
     obj.totalCount = [];
@@ -627,38 +672,26 @@ export class AccreditionService {
         }
       }
     }
-    obj.totalCount.push({ count: obj.paginatedResult.length });
+    obj.totalCount.push({ count: total });
     return [obj];
   }
 
-  async getPracticeManagerDetailData(userId, page, limit, status) {
-    const data = await this.accreditionDAL.getPracticeManagerDetailData(
+  async getPracticeManagerCompleteDashboardData(userId, page, limit, status) {
+    const data = await this.accreditionDAL.getPracticeManagerCompleteDetailData(
       userId,
       page,
       limit,
     );
+    const total =
+      data[0].totalCount.length > 0 ? data[0].totalCount[0].count : 0;
     const obj = new practiceManagerDataDTO();
     obj.paginatedResult = [];
     obj.totalCount = [];
     for (let index = 0; index < data.length; index++) {
       const element = data[index];
-      console.log(element);
       for (let j = 0; j < element.paginatedResult.length; j++) {
         const pagedData = element.paginatedResult[j];
-        if (status === 'INCOMPLETE') {
-          if (
-            pagedData.status === 'INCOMPLETE' &&
-            pagedData.isFormA1Complete === false
-          ) {
-            obj.paginatedResult.push(pagedData);
-          } else if (
-            pagedData.status === 'INCOMPLETE' &&
-            pagedData.isFormAComplete === false
-          ) {
-            console.log('in');
-            obj.paginatedResult.push(pagedData);
-          }
-        } else if (status === 'COMPLETE') {
+        if (status === 'COMPLETE') {
           if (
             pagedData.status === 'INCOMPLETE' &&
             pagedData.isFormA1Complete === true &&
@@ -673,16 +706,9 @@ export class AccreditionService {
             obj.paginatedResult.push(pagedData);
           }
         }
-        // const filtered = pagedData.formA1.filter(
-        //   (x) => x.userId === userId && x.isComplete == status,
-        // );
-        // if (filtered.length > 0) {
-        //   obj.paginatedResult.push(pagedData);
-        //   //obj.totalCount(...element.totalCount);
-        // }
       }
     }
-    obj.totalCount.push({ count: obj.paginatedResult.length });
+    obj.totalCount.push({ count: total });
     return [obj];
   }
 
@@ -700,6 +726,18 @@ export class AccreditionService {
     );
   }
 
+  async getPracticeManagerIncompleteDashboardData(
+    userId: number,
+    page: number,
+    limit: number,
+  ) {
+    return await this.accreditionDAL.getPracticeManagerIncompleteDashboardData(
+      userId,
+      page,
+      limit,
+    );
+  }
+
   async completeFormA(id: ObjectId) {
     const accredition = await this.accreditionDAL.getAccreditionById(id);
 
@@ -707,12 +745,12 @@ export class AccreditionService {
 
     if (completeAll) {
       accredition.isFormAComplete = true;
-    }
 
-    await this.accreditionDAL.updateAccreditionById(
-      accredition._id,
-      accredition,
-    );
+      await this.accreditionDAL.updateAccreditionById(
+        accredition._id,
+        accredition,
+      );
+    }
   }
 
   async completeFormA1(id: ObjectId) {
@@ -741,7 +779,9 @@ export class AccreditionService {
     const accredition = await this.accreditionDAL.getAccreditionById(id);
     accredition.status = 'PENDING';
     accredition.formA.map((o) => {
+      console.log(o);
       if (o.stepName === stepName) {
+        console.log(stepName);
         o.isComplete = true;
       }
     });
@@ -815,26 +855,11 @@ export class AccreditionService {
       }
     });
 
-    // const isAllDone = accredition.formA1.every((o) => o.isComplete === true);
+    const isAllDone = accredition.formA1.every((o) => o.isComplete === true);
 
-    // if (isAllDone) {
-    //   accredition.status = 'INCOMPLETE';
-    // }
-
-    await this.accreditionDAL.updateAccreditionById(
-      accredition._id,
-      accredition,
-    );
-  }
-
-  async completeFinalCheckList(id: ObjectId, stepName: string) {
-    const accredition = await this.accreditionDAL.getAccreditionById(id);
-
-    accredition.formA1.map((o) => {
-      if (o.stepName === stepName) {
-        o.isComplete = true;
-      }
-    });
+    if (isAllDone) {
+      accredition.status = 'INCOMPLETE';
+    }
 
     await this.accreditionDAL.updateAccreditionById(
       accredition._id,

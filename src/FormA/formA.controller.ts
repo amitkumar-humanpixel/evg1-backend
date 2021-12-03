@@ -13,12 +13,15 @@ import {
   ValidationPipe,
   UseGuards,
   Delete,
+  UseInterceptors,
+  UploadedFiles,
 } from '@nestjs/common';
 import { ObjectId } from 'mongoose';
 import { ApiResponseDTO } from 'src/Common/common.dto';
 import { HttpExceptionFilter } from 'src/Filter/exception.filter';
 import { ParseObjectIdPipe } from 'src/Pipe/objectId.pipe';
 import {
+  DeleteStandardDetailsDTO,
   PracticeManagerDTO,
   PracticeStandardsDTO,
   RegistrarDetailsDTO,
@@ -27,9 +30,12 @@ import {
 import { FormAService } from './formA.service';
 import { FormAGuard } from 'src/Guard/formA.guard';
 import { OktaGuard } from 'src/Guard/okta.guard';
+import { FilesInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import { editFileName, FileFilter } from 'src/Utils/file-upload.utils';
 
 @Controller('formA')
-
+@UseGuards(OktaGuard)
 @UseGuards(FormAGuard)
 @UseFilters(new HttpExceptionFilter())
 export class FormAController {
@@ -265,6 +271,27 @@ export class FormAController {
     }
   }
 
+  @Delete('deleteStandardFile')
+  async deleteStandardFile(
+    @Res() res,
+    @Body() deleteStandardDetails: DeleteStandardDetailsDTO,
+  ) {
+    try {
+      await this.formAService.deleteFileUpload(
+        deleteStandardDetails.elementId,
+        deleteStandardDetails.fileId,
+      );
+
+      return res
+        .status(HttpStatus.OK)
+        .json(ApiResponseDTO.setResponse('SUCCESS', 'Deleted successfully!!'));
+    } catch (error: any) {
+      return res
+        .status(HttpStatus.BAD_REQUEST)
+        .json(ApiResponseDTO.setResponse('ERROR', error['message']));
+    }
+  }
+
   @Delete('deleteSupervisor/:id/:userId')
   async deleteSupervisor(
     @Param('id', ParseObjectIdPipe) id: ObjectId,
@@ -283,6 +310,7 @@ export class FormAController {
         .json(ApiResponseDTO.setResponse('ERROR', error['message']));
     }
   }
+
   @Post('submitRegistrarDetails/:id')
   @UsePipes(ValidationPipe)
   async submitRegistrarDetails(
@@ -302,5 +330,50 @@ export class FormAController {
         .status(HttpStatus.BAD_REQUEST)
         .json(ApiResponseDTO.setResponse('ERROR', error['message']));
     }
+  }
+
+  @Post('file/:id')
+  @UseInterceptors(
+    FilesInterceptor('file', 20, {
+      storage: diskStorage({
+        destination: './Files',
+        filename: editFileName,
+      }),
+      fileFilter: FileFilter,
+      limits: {
+        fileSize: 10485760,
+      },
+    }),
+  )
+  async uploadedFile(
+    @Res() res,
+    @Param('id', ParseObjectIdPipe) id: ObjectId,
+    @Body()
+    practiceStandards: PracticeStandardsDTO,
+    @UploadedFiles() files,
+  ) {
+    const arrResponse = [];
+
+    files.forEach((file) => {
+      const response = {
+        fileUrl: `${process.env.BASE_URL}${file.filename}`,
+        fileName: file.filename,
+      };
+      arrResponse.push(response);
+    });
+
+    const data = await this.formAService.submitPracticeStandardsDetails(
+      id,
+      practiceStandards,
+      arrResponse,
+    );
+
+    const fileResponse = {
+      status: 'SUCCESS',
+      data: data,
+      message: 'Successfully Uploaded.',
+    };
+
+    return res.status(HttpStatus.OK).json(fileResponse);
   }
 }

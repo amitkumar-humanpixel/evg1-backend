@@ -4,26 +4,24 @@ import { AccreditionModule } from 'src/Accredition/accredition.module';
 import { FacilityStaffDAL } from 'src/FacilityStaff/facilityStaff.dal';
 import { FacilityStaffSchema } from 'src/FacilityStaff/facilityStaff.entity';
 import { FormAModule } from 'src/FormA/formA.module';
-import { FormBController } from './formB.controller';
-import { FormBDAL } from './formB.dal';
-import { FormBSchema } from './formB.entity';
-import { FormBService } from './formB.service';
 import { UserModule } from 'src/User/user.module';
-import { FormBTempModule } from 'src/FormBTempDetails/formBTemp.module';
+import { FormBTempSchema } from './formBTemp.entity';
+import { FormBModule } from 'src/FormB/formB.module';
+import { FormBTempDAL } from './formBTemp.dal';
+import { FormBTempService } from './formBTemp.service';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([{ name: 'formB', schema: FormBSchema }]),
+    MongooseModule.forFeature([{ name: 'formBTemp', schema: FormBTempSchema }]),
     MongooseModule.forFeature([
       { name: 'facility-staff', schema: FacilityStaffSchema },
     ]),
     forwardRef(() => AccreditionModule),
     forwardRef(() => FormAModule),
-    forwardRef(() => FormBTempModule),
     forwardRef(() => UserModule),
+    forwardRef(() => FormBModule),
   ],
-  controllers: [FormBController],
-  providers: [FormBService, FormBDAL, FacilityStaffDAL],
-  exports: [FormBService],
+  providers: [FormBTempService, FormBTempDAL, FacilityStaffDAL],
+  exports: [FormBTempService],
 })
-export class FormBModule {}
+export class FormBTempModule {}

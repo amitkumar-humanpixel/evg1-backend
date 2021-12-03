@@ -1,19 +1,12 @@
-import { forwardRef, Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { ObjectId } from 'mongoose';
-import { AccreditionService } from 'src/Accredition/accredition.service';
 import { SupervisorDetailsDTOA1 } from 'src/FormA1/formA1.dto';
-import { UserService } from 'src/User/user.service';
 import { SupervisorTempDetailDAL } from './supervisorTempDetails.dal';
 import { SupervisorTempDetailDTO } from './supervisorTempDetails.dto';
+import { ISupervisorTempDetails } from './supervisorTempDetails.interface';
 @Injectable()
 export class SupervisorTempDetailService {
-  constructor(
-    private supervisorTempDetailDAL: SupervisorTempDetailDAL,
-    @Inject(forwardRef(() => AccreditionService))
-    private accreditionService: AccreditionService,
-    @Inject(forwardRef(() => UserService))
-    private userService: UserService,
-  ) { }
+  constructor(private supervisorTempDetailDAL: SupervisorTempDetailDAL) {}
 
   async submitSupervisorDetail(
     accreditionId: ObjectId,
@@ -23,7 +16,6 @@ export class SupervisorTempDetailService {
       await this.supervisorTempDetailDAL.getSupervisorTempDetailsByAccreditionId(
         accreditionId,
       );
-    console.log(supervisorDetails);
     if (supervisorDetails.length == 0 || supervisorDetails == null) {
       const details = new SupervisorTempDetailDTO();
       details.accreditionId = accreditionId;
@@ -49,6 +41,16 @@ export class SupervisorTempDetailService {
     }
   }
 
+  async updateSupervisorTempDetails(
+    id: ObjectId,
+    supervisor: ISupervisorTempDetails,
+  ) {
+    await this.supervisorTempDetailDAL.updateSupervisorTempDetails(
+      id,
+      supervisor,
+    );
+  }
+
   async getSupervisorTempDetailsByAccreditionId(
     accreditionId: ObjectId,
     userId: number,
@@ -57,11 +59,24 @@ export class SupervisorTempDetailService {
       await this.supervisorTempDetailDAL.getSupervisorTempDetailsByAccreditionId(
         accreditionId,
       );
-    if (data == null) {
+    if (data == null || data.length == 0) {
       return null;
     } else {
       return data.filter((x) => x.supervisorDetails.userId == userId);
     }
+  }
+
+  async getSupervisorTempDetailsFromFileId(fileId: ObjectId) {
+    const data = await this.supervisorTempDetailDAL.getDeleteFileUpload(fileId);
+    if (data === null) {
+      return null;
+    } else {
+      return data;
+    }
+  }
+
+  async updateStandardsFileTempDetails(fileId: ObjectId) {
+    await this.supervisorTempDetailDAL.updateDetails(fileId);
   }
 
   async deleteSupervisorDetail(

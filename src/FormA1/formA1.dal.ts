@@ -3,7 +3,6 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, ObjectId } from 'mongoose';
 import { FormA1DTO } from './formA1.dto';
 import { IFormA1 } from './formA1.interface';
-
 @Injectable()
 export class FormA1DAL {
   constructor(
@@ -58,32 +57,22 @@ export class FormA1DAL {
       { upsert: true },
     );
   }
-  async deleteFileUpload(id: ObjectId, path: string) {
-    const fileData = await this.formA1Model.findOne({ accreditionId: id });
-    const pathData = path.split('/');
-    for (let i = 0; i < fileData.supervisorDetails.length; i++) {
-      for (
-        let j = 0;
-        j < fileData.supervisorDetails[i].standardsDetail.length;
-        j++
-      ) {
-        if (fileData?.supervisorDetails[i]?.standardsDetail[j]?.filePath) {
-          if (
-            fileData?.supervisorDetails[i]?.standardsDetail[j]?.filePath?.some(
-              (x) => x.fileUrl === process.env.BASE_URL + pathData[1],
-            )
-          ) {
-            fileData.supervisorDetails[i].standardsDetail[j].filePath =
-              fileData.supervisorDetails[i].standardsDetail[j].filePath?.filter(
-                (x) => x.fileUrl !== process.env.BASE_URL + pathData[1],
-              );
-            break;
-          }
-        }
-      }
-    }
-    await this.formA1Model.updateOne({ accreditionId: id }, fileData, {
-      new: true,
+  async deleteFileUpload(fileId: ObjectId) {
+    return await this.formA1Model.findOne({
+      'supervisorDetails.standardsDetail.filePath._id': fileId,
     });
+  }
+
+  async updateDetails(fileId: ObjectId) {
+    await this.formA1Model.updateMany(
+      { 'supervisorDetails.standardsDetail.filePath._id': fileId },
+      {
+        $pull: {
+          'supervisorDetails.$[].standardsDetail.$[].filePath': {
+            _id: fileId,
+          },
+        },
+      },
+    );
   }
 }

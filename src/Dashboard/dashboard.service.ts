@@ -9,7 +9,7 @@ export class DashboardService {
   constructor(
     private readonly accreditionService: AccreditionService,
     private readonly userService: UserService,
-  ) { }
+  ) {}
 
   async getDashboardStatusDetails(userId: number) {
     const user = await this.userService.getUserByUserId(userId);
@@ -36,6 +36,7 @@ export class DashboardService {
       } else {
         data = await this.accreditionService.getDashboardStatusDetails();
       }
+      //data.sort((a, b) => (a._id > b._id ? 1 : b._id > a._id ? -1 : 0));
       return data;
     } else {
       throw new BadRequestException('Invalid UserId!');
@@ -72,13 +73,21 @@ export class DashboardService {
         user.role.toLowerCase() === 'practice_manager' ||
         user.role.toLowerCase() === 'principal_supervisor'
       ) {
-        if (status === 'COMPLETE' || status === 'INCOMPLETE') {
-          data = await this.accreditionService.getPracticeManagerDetailData(
-            userId,
-            page,
-            limit,
-            status,
-          );
+        if (status === 'COMPLETE') {
+          data =
+            await this.accreditionService.getPracticeManagerCompleteDashboardData(
+              userId,
+              page,
+              limit,
+              status,
+            );
+        } else if (status === 'INCOMPLETE') {
+          data =
+            await this.accreditionService.getPracticeManagerIncompleteDashboardData(
+              userId,
+              page,
+              limit,
+            );
         } else {
           data =
             await this.accreditionService.getPracticeManagerAndAccreditorDashboardData(
@@ -123,8 +132,8 @@ export class DashboardService {
           currentStatus === 'INCOMPLETE'
             ? currentStatus
             : currentStatus === 'COMPLETE'
-              ? currentStatus
-              : obj.status;
+            ? currentStatus
+            : obj.status;
         dashboardData.practiceName = obj.facility.practiceName;
         if (
           user.role.toLowerCase().includes('super_admin') ||
@@ -136,13 +145,10 @@ export class DashboardService {
           user.role.toLowerCase().includes('accreditor')
         ) {
           let isCheck = false;
-          console.log(obj.isReaccreditationChecklistComplete);
           if (!obj.isReaccreditationChecklistComplete) {
-            console.log('140');
             dashboardData.formType = 'reaccreditationChecklist';
             isCheck = true;
           } else if (!obj.isPostDetailsComplete) {
-            console.log('143');
             dashboardData.formType = 'postDetails';
             isCheck = true;
           }
@@ -169,7 +175,6 @@ export class DashboardService {
           }
 
           if (!isCheck) {
-            console.log(obj.isAddressRecommendation);
             if (!obj.isAddressRecommendation) {
               dashboardData.formType = 'previousRecommendations';
               isCheck = true;
@@ -219,7 +224,10 @@ export class DashboardService {
               })
               .replace(/([a-z])([A-Z])/g, '$1 $2')
               .replace(/([A-Z])([A-Z][a-z])/g, '$1 $2');
-            if (key.toLowerCase().includes('createdat') || key.toLocaleLowerCase().includes('enddate')) {
+            if (
+              key.toLowerCase().includes('createdat') ||
+              key.toLocaleLowerCase().includes('enddate')
+            ) {
               header.type = 'date';
             } else {
               header.type = 'string';

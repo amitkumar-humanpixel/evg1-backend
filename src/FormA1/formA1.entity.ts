@@ -28,6 +28,9 @@ export const FormA1Schema = new mongoose.Schema(
           {
             title: { type: String },
             status: { type: String },
+            isFileUploadAllowed: { type: Boolean },
+            allowedFileTypes: [String],
+            allowedFileMimeTypes: [String],
             filePath: [
               {
                 fileName: { type: String },

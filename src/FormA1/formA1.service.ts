@@ -1,7 +1,16 @@
-import { forwardRef, Inject, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  forwardRef,
+  Inject,
+  Injectable,
+} from '@nestjs/common';
 import { ObjectId } from 'mongoose';
 import { AccreditionService } from 'src/Accredition/accredition.service';
-import { FormStatus, GetSupervisorDetails } from 'src/FormA/formA.dto';
+import {
+  fileDetal,
+  FormStatus,
+  GetSupervisorDetails,
+} from 'src/FormA/formA.dto';
 import { FormAService } from 'src/FormA/formA.service';
 import { applicationsDTO, assessmentDTO, FormBDTO } from 'src/FormB/formB.dto';
 import { FormBService } from 'src/FormB/formB.service';
@@ -10,12 +19,15 @@ import {
   finalCheckListDetailsDTO,
   FormA1DTO,
   GetSupervisorDetail,
+  standardsDetailDTO,
   SupervisorDetailsDTOA1,
 } from './formA1.dto';
+import * as fs from 'fs';
 import { IFormA1 } from './formA1.interface';
 import { mailSender } from 'src/Listeners/mail.listener';
 import { UserService } from 'src/User/user.service';
 import { SupervisorTempDetailService } from 'src/SupervisorTempDetails/supervisorTempDetails.service';
+import { response } from 'express';
 @Injectable()
 export class FormA1Service {
   constructor(
@@ -29,7 +41,7 @@ export class FormA1Service {
     @Inject(forwardRef(() => UserService))
     private readonly userService: UserService,
     private readonly tempSupervisorDetail: SupervisorTempDetailService,
-  ) { }
+  ) {}
 
   async getSupervisors(
     id: ObjectId,
@@ -160,7 +172,6 @@ export class FormA1Service {
     accreditionId: ObjectId,
     supervisor: SupervisorDetailsDTOA1,
   ) {
-    console.log(supervisor);
     await this.tempSupervisorDetail.submitSupervisorDetail(
       accreditionId,
       supervisor,
@@ -177,8 +188,7 @@ export class FormA1Service {
         userId,
       );
     const response = new GetSupervisorDetail();
-    if (tempDetails.length == 0) {
-      console.log(id);
+    if (tempDetails === null || tempDetails.length == 0) {
       const responseData = await this.formA1DAL.getSupervisorsDetails(id);
       if (responseData !== null) {
         const userData = responseData.supervisorDetails.find(
@@ -254,14 +264,17 @@ export class FormA1Service {
         const app = new applicationsDTO();
         const element = objFormA1.supervisorDetails[index];
         app.supervisorId = element.userId;
-        
-        if(Array.isArray(accredition.college) && accredition.college?.length > 0){
-          accredition.college.forEach(element => {
-            if(element == 'RACGP'){
+
+        if (
+          Array.isArray(accredition.college) &&
+          accredition.college?.length > 0
+        ) {
+          accredition.college.forEach((element) => {
+            if (element == 'RACGP') {
               app.RACGP = 'true';
             }
 
-            if(element == 'ACRRM'){
+            if (element == 'ACRRM') {
               app.ACRRM = 'true';
             }
           });
@@ -342,7 +355,182 @@ export class FormA1Service {
     );
   }
 
-  async deleteFileUpload(id: ObjectId, path: string) {
-    await this.formA1DAL.deleteFileUpload(id, path);
+  async deleteFileUpload(
+    supervisorId: number,
+    elementId: ObjectId,
+    fileId: ObjectId,
+  ) {
+    const tempDetails =
+      await this.tempSupervisorDetail.getSupervisorTempDetailsFromFileId(
+        fileId,
+      );
+    if (tempDetails === null) {
+      const fileData = await this.formA1DAL.deleteFileUpload(fileId);
+      if (fileData) {
+        const supervisor = fileData.supervisorDetails.find(
+          (x) => x.userId === supervisorId,
+        );
+
+        if (supervisor) {
+          const element = supervisor.standardsDetail.find(
+            (x) => x._id == elementId,
+          );
+
+          if (element) {
+            const fileDetail = element.filePath.find((x) => x._id == fileId);
+            if (fileDetail) {
+              fs.unlinkSync(`Files/${fileDetail.fileName}`);
+              await this.formA1DAL.updateDetails(fileId);
+            }
+          } else {
+            throw new BadRequestException('Invalid element id');
+          }
+        } else {
+          throw new BadRequestException('Invalid supervisor id');
+        }
+      } else {
+        throw new BadRequestException('Invalid file id');
+      }
+    } else {
+      const element = tempDetails.supervisorDetails.standardsDetail.find(
+        (x) => x._id.toString() === elementId.toString(),
+      );
+      if (element) {
+        const fileDetail = element.filePath.find(
+          (x) => x._id.toString() === fileId.toString(),
+        );
+        if (fileDetail) {
+          fs.unlinkSync(`Files/${fileDetail.fileName}`);
+          await this.tempSupervisorDetail.updateStandardsFileTempDetails(
+            fileId,
+          );
+        }
+      } else {
+        throw new BadRequestException('Invalid element id');
+      }
+    }
+  }
+
+  async submitStandardsDetails(
+    accreditionId: ObjectId,
+    userId: number,
+    standardDetail: standardsDetailDTO,
+    fileDetails: fileDetal[],
+  ) {
+    let responseData;
+    const tempDetails =
+      await this.tempSupervisorDetail.getSupervisorTempDetailsByAccreditionId(
+        accreditionId,
+        userId,
+      );
+    if (tempDetails === null || tempDetails.length === 0) {
+      const objFormA1 = await this.formA1DAL.getFormA1ByAccreditionId(
+        accreditionId,
+      );
+
+      // due to bug is generated this code is added.
+      if (objFormA1.supervisorDetails.length > 0) {
+        const existingSupervisor = objFormA1.supervisorDetails.find(
+          (x) => x.userId === userId,
+        );
+
+        if (existingSupervisor === undefined) {
+          const objSupervisorDetails = new SupervisorDetailsDTOA1();
+          objSupervisorDetails.userId = userId;
+
+          objFormA1.supervisorDetails.push(objSupervisorDetails);
+        }
+      }
+
+      for (let index = 0; index < objFormA1.supervisorDetails.length; index++) {
+        if (objFormA1.supervisorDetails[index].userId == userId) {
+          let isUpdated = false;
+          if (objFormA1.supervisorDetails[index].standardsDetail.length > 0) {
+            objFormA1.supervisorDetails[index].standardsDetail.map((x) => {
+              if (x.title === standardDetail.title) {
+                for (let f = 0; f < fileDetails.length; f++) {
+                  x.filePath.push(fileDetails[f]);
+                }
+                x.status = standardDetail.status;
+                x.title = standardDetail.title;
+                standardDetail._id = x._id;
+                isUpdated = true;
+              }
+            });
+            if (!isUpdated) {
+              standardDetail.filePath = fileDetails;
+              objFormA1.supervisorDetails[index].standardsDetail.push(
+                standardDetail,
+              );
+            }
+          } else {
+            standardDetail.filePath = fileDetails;
+            objFormA1.supervisorDetails[index].standardsDetail.push(
+              standardDetail,
+            );
+          }
+        }
+      }
+
+      await this.formA1DAL.updateFormA1(objFormA1._id, objFormA1);
+      const userData = objFormA1.supervisorDetails.find(
+        (x) => x.userId.toString() === userId.toString(),
+      );
+      responseData = userData?.standardsDetail.find(
+        (x) => x.title === standardDetail.title,
+      );
+      const files = [];
+      for (let index = 0; index < fileDetails.length; index++) {
+        const element = fileDetails[index];
+        responseData.filePath.map((x) =>{
+          if (x.fileName === element.fileName) {
+            files.push(x);
+          }
+        });
+      }
+      responseData.filePath = files;
+      return responseData;
+    } else {
+      const details = tempDetails[0];
+      let isUpdated = false;
+      if (details?.supervisorDetails?.standardsDetail?.length > 0) {
+        details.supervisorDetails.standardsDetail.map((x) => {
+          if (x.title === standardDetail.title) {
+            for (let f = 0; f < fileDetails.length; f++) {
+              x.filePath.push(fileDetails[f]);
+            }
+            x.status = standardDetail.status;
+            x.title = standardDetail.title;
+            standardDetail._id = x._id;
+            isUpdated = true;
+          }
+        });
+        if (!isUpdated) {
+          standardDetail.filePath = fileDetails;
+          details.supervisorDetails.standardsDetail.push(standardDetail);
+        }
+      } else {
+        standardDetail.filePath = fileDetails;
+        details.supervisorDetails.standardsDetail.push(standardDetail);
+      }
+      await this.tempSupervisorDetail.updateSupervisorTempDetails(
+        details._id,
+        details,
+      );
+      responseData = details.supervisorDetails.standardsDetail.find(
+        (x) => x.title === standardDetail.title,
+      );
+      const files = [];
+      for (let index = 0; index < fileDetails.length; index++) {
+        const element = fileDetails[index];
+        responseData.filePath.map((x) =>{
+          if (x.fileName === element.fileName) {
+            files.push(x);
+          }
+        });
+      }
+      responseData.filePath = files;
+    }
+    return responseData;
   }
 }
